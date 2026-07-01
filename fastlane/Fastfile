@@ -105,7 +105,7 @@ platform :ios do
   end
 
   desc "Upload the archived IPA to TestFlight / App Store Connect"
-  lane :testflight do
+  lane :upload_build do
     upload_to_testflight(
       api_key_path: ASC_KEY_JSON,
       ipa: "./fastlane/build/Strata.ipa",

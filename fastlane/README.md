@@ -47,6 +47,22 @@ Upload a built .ipa (set IPA_PATH), no metadata, no submit
 
 Submit the current build for review — PUBLISHES. Run only with explicit approval.
 
+### ios build_ipa
+
+```sh
+[bundle exec] fastlane ios build_ipa
+```
+
+Archive a Release IPA for the App Store (Expo workspace)
+
+### ios testflight
+
+```sh
+[bundle exec] fastlane ios testflight
+```
+
+Upload the archived IPA to TestFlight / App Store Connect
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
