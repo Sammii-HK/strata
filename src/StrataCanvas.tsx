@@ -45,6 +45,7 @@ export default function StrataCanvas() {
   // Scrubber drill-in: a nav stack of item ids. sheetIdx = -1 shows the chips.
   const [sheetHist, setSheetHist] = useState<string[]>([])
   const [sheetIdx, setSheetIdx] = useState(-1)
+  const [sheetH, setSheetH] = useState(0) // measured height of the active bottom sheet
 
   const visibleRef = useRef<{ id: string; x: number; y: number; r: number }[]>([])
 
@@ -216,7 +217,8 @@ export default function StrataCanvas() {
   // the fan lane expands into sub-lanes on zoom ----
   // Condense the lines when any bottom sheet is up (scrubber or a tapped-item
   // readout) so it never covers a line or the selected item.
-  const usableH = H - TOP - BOTTOM - SCRUB_H - (shellOn || sel.length > 0 ? 150 : 0)
+  const sheetUp = sel.length > 0 || shellOn || sheetIdx >= 0
+  const usableH = H - TOP - BOTTOM - SCRUB_H - (sheetUp ? (sheetH > 0 ? sheetH : 150) + 16 : 0)
   const mSub = Math.max(1, subNames.length)
   const visLanes = LANES.filter((l) => !hidden.has(l.id))
   const nVis = Math.max(1, visLanes.length)
@@ -522,7 +524,7 @@ export default function StrataCanvas() {
 
       {/* ---- readout ---- */}
       {!shellOn && selObjs.length === 1 && (
-        <View style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
+        <View onLayout={(e) => setSheetH(e.nativeEvent.layout.height)} style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
               <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: LANE_MAP[selObjs[0].lane]?.color ?? '#e8b84b' }} />
@@ -540,7 +542,7 @@ export default function StrataCanvas() {
       )}
 
       {!shellOn && selObjs.length === 2 && (
-        <View style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
+        <View onLayout={(e) => setSheetH(e.nativeEvent.layout.height)} style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <RNText style={{ color: '#9aa1ac', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>The gap</RNText>
             <Pressable onPress={() => setSel([])} hitSlop={12}>
@@ -557,7 +559,7 @@ export default function StrataCanvas() {
 
       {/* ---- glass cross-section scrubber (chip list) ---- */}
       {shellOn && sheetIdx < 0 && (
-        <BlurView intensity={36} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 13, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' }}>
+        <BlurView onLayout={(e) => setSheetH(e.nativeEvent.layout.height)} intensity={36} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 13, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' }}>
           <View style={{ padding: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <RNText style={{ color: '#e9eaee', fontSize: 13 }}>
@@ -590,7 +592,7 @@ export default function StrataCanvas() {
         const cur = byId.get(sheetHist[sheetIdx])
         if (!cur) return null
         return (
-          <BlurView intensity={40} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 14, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' }}>
+          <BlurView onLayout={(e) => setSheetH(e.nativeEvent.layout.height)} intensity={40} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 14, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' }}>
             <View style={{ padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
