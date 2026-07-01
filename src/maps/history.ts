@@ -16,6 +16,7 @@ const items: StrataItem[] = ALL.map((e) => ({
   lane: e.thread,
   sub: e.sub,
   importance: e.importance as 1 | 2 | 3 | 4,
+  domain: e.domain,
   fuzzy: e.fuzzy,
   note: e.note,
 }))

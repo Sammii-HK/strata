@@ -27,6 +27,8 @@ export interface StrataItem {
   /** Optional sub-lane it fans into on deep zoom: country, constellation, clade, ocean zone... */
   sub?: string
   importance: 1 | 2 | 3 | 4
+  /** Optional theme (e.g. 'war', 'science'); the labeller can de-emphasise some. */
+  domain?: string
   /** Legendary / uncertain position, drawn as a dashed ring. */
   fuzzy?: boolean
   note?: string

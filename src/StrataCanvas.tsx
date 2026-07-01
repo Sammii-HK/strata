@@ -287,10 +287,13 @@ export default function StrataCanvas() {
       }
     }
   }
-  place(visible.filter((p) => p.o.importance === 1 && showLbl(1)))
-  place(visible.filter((p) => p.o.importance === 2 && showLbl(2)))
-  place(visible.filter((p) => p.o.importance === 3 && showLbl(3)))
-  place(visible.filter((p) => p.o.importance === 4 && showLbl(4)))
+  // Label rank = importance, but wars are demoted a tier so discoveries and
+  // ideas headline (the dots are unchanged; only who wins the label space).
+  const labelRank = (o: StrataItem) => Math.min(4, o.importance + (o.domain === 'war' ? 1 : 0))
+  place(visible.filter((p) => labelRank(p.o) === 1 && showLbl(1)))
+  place(visible.filter((p) => labelRank(p.o) === 2 && showLbl(2)))
+  place(visible.filter((p) => labelRank(p.o) === 3 && showLbl(3)))
+  place(visible.filter((p) => labelRank(p.o) === 4 && showLbl(4)))
 
   const ticks: { d: number; x: number }[] = []
   {
