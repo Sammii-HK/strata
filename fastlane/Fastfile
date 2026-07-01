@@ -1,37 +1,26 @@
 # Strata — App Store Connect automation via the App Store Connect API.
 #
-# Auth uses an existing ASC API key. Set these before running:
-#   export ASC_ISSUER_ID="<uuid from ASC > Users and Access > Integrations>"   # REQUIRED
-#   export ASC_KEY_ID="GMGDL7Q7NA"                                             # default below
-#   export ASC_KEY_PATH="~/.appstoreconnect/private_keys/AuthKey_GMGDL7Q7NA.p8"
+# Auth uses the existing ASC API key JSON (the same one the other iOS apps use):
+#   ~/.appstoreconnect/fastlane_api_key.json   (key_id + issuer_id + key)
+# Override with ASC_KEY_JSON if needed. No secrets live in this repo.
 #
 # Hard human gates the API cannot do (Apple requires them):
 #   - Accept the Paid Applications Agreement (needed to sell a paid app)
 #   - Complete tax + banking in ASC
-#   - The very first app record may need creating in ASC once (or use `produce`)
 #
 # Lanes:
-#   fastlane ios metadata   -> push listing text + screenshots only (no build, no submit)
-#   fastlane ios upload      -> upload a built .ipa (set IPA_PATH), no submit
-#   fastlane ios submit      -> submit the current build for review (PUBLISHES; run only on Sammii's OK)
+#   fastlane ios metadata  -> push listing metadata + screenshots only (no build, no submit)
+#   fastlane ios upload    -> upload a built .ipa (set IPA_PATH), no submit
+#   fastlane ios submit    -> submit the current build for review (PUBLISHES; run only on approval)
 
-def asc_key
-  app_store_connect_api_key(
-    key_id: ENV["ASC_KEY_ID"] || "GMGDL7Q7NA",
-    issuer_id: ENV["ASC_ISSUER_ID"],
-    key_filepath: File.expand_path(ENV["ASC_KEY_PATH"] || "~/.appstoreconnect/private_keys/AuthKey_GMGDL7Q7NA.p8"),
-    duration: 1200,
-    in_house: false
-  )
-end
-
+ASC_KEY_JSON = File.expand_path(ENV["ASC_KEY_JSON"] || "~/.appstoreconnect/fastlane_api_key.json")
 APP_ID = "com.sammii.chronoline"
 
 platform :ios do
   desc "Push listing metadata + screenshots (no build, no submit)"
   lane :metadata do
     deliver(
-      api_key: asc_key,
+      api_key_path: ASC_KEY_JSON,
       app_identifier: APP_ID,
       metadata_path: "./fastlane/metadata",
       screenshots_path: "./fastlane/screenshots",
@@ -47,7 +36,7 @@ platform :ios do
   desc "Upload a built .ipa (set IPA_PATH), no metadata, no submit"
   lane :upload do
     deliver(
-      api_key: asc_key,
+      api_key_path: ASC_KEY_JSON,
       app_identifier: APP_ID,
       ipa: ENV.fetch("IPA_PATH"),
       skip_metadata: true,
@@ -59,7 +48,7 @@ platform :ios do
   desc "Submit the current build for review — PUBLISHES. Run only with explicit approval."
   lane :submit do
     deliver(
-      api_key: asc_key,
+      api_key_path: ASC_KEY_JSON,
       app_identifier: APP_ID,
       skip_binary_upload: true,
       skip_metadata: true,
