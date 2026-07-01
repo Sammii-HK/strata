@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "production": {
+      "distribution": "store",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "autoIncrement": true
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": { "simulator": true }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascApiKeyPath": "/Users/sammii/.appstoreconnect/AuthKey_GMGDL7Q7NA.p8",
+        "ascApiKeyId": "GMGDL7Q7NA",
+        "ascApiKeyIssuerId": "7c17ab57-29f9-4083-9839-ea15adf32cc5",
+        "appleTeamId": "ASG43SHM5N",
+        "companyName": "Lunar Computing, Inc"
+      }
+    }
+  }
+}

@@ -1,4 +1,4 @@
 app_identifier("app.lunary.strata") # bundle id (internal; app is named Strata)
-# Auth is via the App Store Connect API key (see Fastfile), so apple_id / team ids
-# are optional. Set ASC_APPLE_ID / ASC_TEAM_ID env vars if a lane needs them.
-apple_id(ENV["ASC_APPLE_ID"]) if ENV["ASC_APPLE_ID"]
+apple_id(ENV["APPLE_ID"] || "kellow.sammii@gmail.com")
+team_id("ASG43SHM5N") # Lunar Computing, Inc
+itc_team_id(nil)
