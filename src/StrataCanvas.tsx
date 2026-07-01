@@ -193,7 +193,8 @@ export default function StrataCanvas() {
 
   // ---- layout: one band per VISIBLE lane (hidden lanes reclaim their space);
   // the fan lane expands into sub-lanes on zoom ----
-  const usableH = H - TOP - BOTTOM
+  // Reserve room for the glass scrubber panel so it never covers the bottom lines.
+  const usableH = H - TOP - BOTTOM - (shellOn ? 180 : 0)
   const mSub = Math.max(1, subNames.length)
   const visLanes = LANES.filter((l) => !hidden.has(l.id))
   const nVis = Math.max(1, visLanes.length)
