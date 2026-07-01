@@ -205,8 +205,9 @@ export default function StrataCanvas() {
 
   // ---- layout: one band per VISIBLE lane (hidden lanes reclaim their space);
   // the fan lane expands into sub-lanes on zoom ----
-  // Reserve room for the glass scrubber panel so it never covers the bottom lines.
-  const usableH = H - TOP - BOTTOM - (shellOn ? 180 : 0)
+  // Condense the lines when any bottom sheet is up (scrubber or a tapped-item
+  // readout) so it never covers a line or the selected item.
+  const usableH = H - TOP - BOTTOM - (shellOn || sel.length > 0 ? 180 : 0)
   const mSub = Math.max(1, subNames.length)
   const visLanes = LANES.filter((l) => !hidden.has(l.id))
   const nVis = Math.max(1, visLanes.length)
