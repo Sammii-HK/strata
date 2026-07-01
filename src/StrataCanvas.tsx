@@ -18,6 +18,15 @@ const TOP = 112
 const BOTTOM = 46
 const SCRUB_H = 58 // persistent x-axis scrubber track along the bottom
 
+// Native haptic tick (no-op off iOS / if the module is missing).
+const haptic = (style: 'Light' | 'Medium' = 'Light') => {
+  if (Platform.OS !== 'ios') return
+  try {
+    const H = require('expo-haptics')
+    H.impactAsync(H.ImpactFeedbackStyle[style])
+  } catch {}
+}
+
 const fontStyle = { fontFamily: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }) as string, fontSize: 11 }
 const fontBoldStyle = { fontFamily: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }) as string, fontSize: 12, fontWeight: '600' as const }
 
@@ -208,7 +217,11 @@ export default function StrataCanvas() {
       }
       if (best && bd < Math.max(best.r + 14, 20)) {
         const id = best.id
-        setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id].slice(-2)))
+        setSel((s) => {
+          const next = s.includes(id) ? s.filter((x) => x !== id) : [...s, id].slice(-2)
+          haptic(next.length === 2 ? 'Medium' : 'Light')
+          return next
+        })
       }
     })
   const gesture = Gesture.Simultaneous(pan, pinch, tap)
