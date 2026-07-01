@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Platform, Pressable, Text as RNText, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
+import Onboarding from './src/Onboarding';
 
 type Lens = 'cosmos' | 'history';
+
+let seenIntro = false;
 
 function LensView({ lens }: { lens: Lens }) {
   // Skia needs CanvasKit loaded before its module is imported, so on web we
@@ -24,6 +27,7 @@ function LensView({ lens }: { lens: Lens }) {
 
 export default function App() {
   const [lens, setLens] = useState<Lens>('cosmos');
+  const [showIntro, setShowIntro] = useState(!seenIntro);
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#101218' }}>
       <StatusBar style="light" />
@@ -52,6 +56,7 @@ export default function App() {
           </Pressable>
         ))}
       </View>
+      {showIntro && <Onboarding lens={lens} onDone={() => { seenIntro = true; setShowIntro(false); }} />}
     </GestureHandlerRootView>
   );
 }
