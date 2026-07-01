@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, Text as RNText, TextInput, useWindowDimensions, View } from 'react-native'
 import { Canvas, Fill, Group, Line, Circle, Text, matchFont, vec } from '@shopify/react-native-skia'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import { BlurView } from 'expo-blur'
 import { MapContext } from './mapContext'
 import type { StrataItem } from './engine/strata'
 
@@ -434,7 +435,7 @@ export default function StrataCanvas() {
       )}
 
       {/* ---- readout ---- */}
-      {selObjs.length === 1 && (
+      {!shellOn && selObjs.length === 1 && (
         <View style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 10, padding: 12 }}>
           <RNText style={{ color: '#e9eaee', fontSize: 13 }}>
             <RNText style={{ color: '#e8b84b', fontWeight: '600' }}>{selObjs[0].label}</RNText> · {fmt(selObjs[0].pos)}{config.originLabel ?? ''} · {laneNameOf(selObjs[0].lane)}{selObjs[0].sub ? ` · ${selObjs[0].sub}` : ''}
@@ -447,7 +448,7 @@ export default function StrataCanvas() {
         </View>
       )}
 
-      {selObjs.length === 2 && (
+      {!shellOn && selObjs.length === 2 && (
         <View style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 10, padding: 12 }}>
           <RNText style={{ color: '#e9eaee', fontSize: 13 }}>
             <RNText style={{ color: '#e8b84b', fontWeight: '600' }}>{fmtSpan(Math.abs(selObjs[0].pos - selObjs[1].pos))}</RNText> between {selObjs[0].label} and {selObjs[1].label}
@@ -459,6 +460,31 @@ export default function StrataCanvas() {
             <RNText style={{ color: '#9aa1ac' }}>clear</RNText>
           </Pressable>
         </View>
+      )}
+
+      {/* ---- glass cross-section scrubber ---- */}
+      {shellOn && (
+        <BlurView intensity={36} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 13, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' }}>
+          <View style={{ padding: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <RNText style={{ color: '#e9eaee', fontSize: 13 }}>
+                Cross-section at <RNText style={{ color: '#e8b84b', fontWeight: '700' }}>{fmt(shellPos)}</RNText>
+              </RNText>
+              <Pressable onPress={() => setShellOn(false)} hitSlop={10}>
+                <RNText style={{ color: '#9aa1ac', fontSize: 13 }}>done</RNText>
+              </Pressable>
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+              {shellState.filter(({ cat }) => !hidden.has(cat.id)).map(({ cat, o }) => (
+                <View key={cat.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 8, paddingVertical: 5, paddingHorizontal: 9 }}>
+                  <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: cat.color }} />
+                  <RNText style={{ color: o ? '#e9eaee' : '#5b626c', fontSize: 12 }}>{o ? o.label : '—'}</RNText>
+                </View>
+              ))}
+            </View>
+            <RNText style={{ color: '#6a7280', fontSize: 11, marginTop: 10 }}>drag across the map to sweep</RNText>
+          </View>
+        </BlurView>
       )}
     </View>
   )
