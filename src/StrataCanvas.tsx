@@ -35,8 +35,7 @@ export default function StrataCanvas() {
   const lastScale = useRef(1)
 
   const [sel, setSel] = useState<string[]>([])
-  const [shellOn, setShellOn] = useState(false) // cross-section (meanwhile) panel visible
-  const [shellPos, setShellPos] = useState(1000)
+  const [shellOn, setShellOn] = useState(false) // cross-section (meanwhile) panel, reads the view centre
   const [allSubs, setAllSubs] = useState(false)
   const [hidden, setHidden] = useState<Set<string>>(() => new Set())
   const [menuOpen, setMenuOpen] = useState(false)
@@ -83,8 +82,6 @@ export default function StrataCanvas() {
     const nk = Math.max(1, Math.min(60, 1 / span))
     const tx = Math.max(W - W * nk, Math.min(0, -uu(f[0]) * W * nk))
     setView({ k: nk, tx })
-    const midA = (axL(f[0]) + axL(f[1])) / 2
-    setShellPos(config.scale === 'log' ? Math.pow(10, midA) : midA)
   }, [config, W])
 
   // Reset transient state when switching maps.
@@ -120,6 +117,7 @@ export default function StrataCanvas() {
   const sx = (v: number) => unit(v) * W * view.k + view.tx
   const posAtPx = (px: number) => inv(lo + ((px - viewRef.current.tx) / (W * viewRef.current.k)) * (hi - lo))
   const k = view.k
+  const shellPos = posAtPx(W / 2) // the meanwhile cross-section reads the view centre
 
   // Position-aware fan: whichever fannable lane is most centred on screen opens
   // (so zooming into the Solar System opens it; into the constellations opens them).
@@ -174,14 +172,12 @@ export default function StrataCanvas() {
     .onChange((e) => {
       setView((v) => ({ k: v.k, tx: clampTx(v.tx + e.changeX, v.k, W) }))
     })
-  // The scrubber track has its own pan/tap gesture that sets shellPos.
-  const scrub = Gesture.Pan()
-    .runOnJS(true)
-    .onBegin((e) => { setShellOn(true); setShellPos(clamp(posAtPx(e.x), loP, hiP)) })
-    .onChange((e) => setShellPos(clamp(posAtPx(e.x), loP, hiP)))
-  const scrubTap = Gesture.Tap()
-    .runOnJS(true)
-    .onEnd((e) => { setShellOn(true); setShellPos(clamp(posAtPx(e.x), loP, hiP)) })
+  // The scrubber track is a navigator: drag/tap along it to pan the whole view
+  // to that point on the axis (centre the view on the tapped x), so you can jump
+  // end-to-end in one move instead of dragging many times.
+  const jumpTo = (x: number) => setView((v) => ({ k: v.k, tx: clampTx(W / 2 - x * v.k, v.k, W) }))
+  const scrub = Gesture.Pan().runOnJS(true).onChange((e) => jumpTo(e.x))
+  const scrubTap = Gesture.Tap().runOnJS(true).onEnd((e) => jumpTo(e.x))
   const pinch = Gesture.Pinch()
     .runOnJS(true)
     .onBegin(() => {
@@ -499,6 +495,10 @@ export default function StrataCanvas() {
       {menuOpen && (
         <View style={{ position: 'absolute', top: 82, left: 90, zIndex: 30, minWidth: 210, maxHeight: H - 160, ...menuBox }}>
           <ScrollView>
+            <Pressable style={item} onPress={() => setShellOn((v) => !v)}>
+              <RNText style={{ color: '#e9eaee', fontSize: 13 }}>{config.scrubberLabel}</RNText>
+              <RNText style={{ color: '#e8b84b' }}>{shellOn ? '✓' : ''}</RNText>
+            </Pressable>
             {config.fanFeatured && config.fanToggleLabel && (
               <Pressable style={item} onPress={() => setAllSubs((v) => !v)}>
                 <RNText style={{ color: '#e9eaee', fontSize: 13 }}>{config.fanToggleLabel}</RNText>
@@ -619,16 +619,24 @@ export default function StrataCanvas() {
         )
       })()}
 
-      {/* ---- persistent x-axis scrubber track ---- */}
+      {/* ---- persistent x-axis navigator (scrollbar over the whole graphic) ---- */}
+      {(() => {
+        const thumbW = Math.max(30, W / view.k)
+        const thumbLeft = clamp(-view.tx / view.k, 0, W - thumbW)
+        return (
       <GestureDetector gesture={Gesture.Simultaneous(scrub, scrubTap)}>
         <BlurView intensity={44} tint="dark" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: SCRUB_H, zIndex: 15, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.12)' }}>
           <View style={{ flex: 1 }}>
-            <View style={{ position: 'absolute', left: 16, right: 16, top: SCRUB_H / 2 + 4, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.16)' }} />
-            <RNText style={{ position: 'absolute', left: clamp(shellX - 44, 6, W - 94), top: 8, width: 88, textAlign: 'center', color: '#e8b84b', fontSize: 12, fontWeight: '700' }}>{fmt(shellPos)}</RNText>
-            <View style={{ position: 'absolute', left: clamp(shellX - 11, 5, W - 27), top: SCRUB_H / 2 - 6, width: 22, height: 22, borderRadius: 11, backgroundColor: '#e8b84b', borderWidth: 2, borderColor: 'rgba(255,255,255,0.6)' }} />
+            <View style={{ position: 'absolute', left: 12, right: 12, top: SCRUB_H / 2 + 5, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.13)' }} />
+            <RNText style={{ position: 'absolute', left: 12, top: 8, color: '#6a7280', fontSize: 10 }}>{fmt(loP)}</RNText>
+            <RNText style={{ position: 'absolute', right: 12, top: 8, color: '#6a7280', fontSize: 10 }}>{fmt(hiP)}</RNText>
+            <RNText style={{ position: 'absolute', left: clamp(thumbLeft + thumbW / 2 - 44, 6, W - 94), top: 8, width: 88, textAlign: 'center', color: '#e8b84b', fontSize: 11, fontWeight: '700' }}>{fmt(shellPos)}</RNText>
+            <View style={{ position: 'absolute', left: thumbLeft, top: SCRUB_H / 2 - 2, width: thumbW, height: 15, borderRadius: 8, backgroundColor: 'rgba(232,184,75,0.28)', borderWidth: 1.5, borderColor: '#e8b84b' }} />
           </View>
         </BlurView>
       </GestureDetector>
+        )
+      })()}
     </View>
   )
 }
