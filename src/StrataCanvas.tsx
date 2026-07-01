@@ -244,7 +244,7 @@ export default function StrataCanvas() {
     return laneCenterY(o.lane)
   }
 
-  const showImp = (i: number) => (i <= 3 ? true : k >= 2.2)
+  const showImp = (i: number) => (i <= 3 ? true : k >= (config.lodImp4K ?? 2.2))
   const showLbl = (i: number) => (i === 1 ? true : i === 2 ? k >= 1.1 : i === 3 ? k >= 1.9 : k >= 3.5)
 
   const visible = ITEMS.filter((o) => showImp(o.importance) && !hidden.has(o.lane))

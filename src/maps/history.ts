@@ -61,5 +61,6 @@ export const historyConfig: StrataConfig = {
   compare,
   scrubberLabel: 'Meanwhile',
   formatSpan: fmtSpan,
+  lodImp4K: 0, // content-rich: show every event from the start (no star-density gating)
   hint: 'pinch to zoom · drag to travel · tap any event, tap a second to measure the years between',
 }

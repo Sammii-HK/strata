@@ -67,4 +67,8 @@ export interface StrataConfig {
   formatSpan?: (v: number) => string
   /** One-line help shown under the canvas. */
   hint?: string
+  /** Zoom (k) above which importance-4 items appear. Default 2.2 (good for the
+   * star-dense Cosmos). Set low (e.g. 0) for content-rich maps like History so
+   * everything shows from the start. */
+  lodImp4K?: number
 }
