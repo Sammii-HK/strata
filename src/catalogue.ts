@@ -2,10 +2,15 @@
 // soft-paywall gating. A map is either included (free, full depth), owned
 // (unlocked pack), locked (purchasable), or coming-soon (roadmap, not built).
 //
-// Pricing model: free app + Cosmos & History included. Packs £2.99 one-time.
-// "Chronoline Complete" £9.99 unlocks every pack plus all future maps. No subs.
+// Pricing model: PAID app £9.99 one-time, includes Cosmos & History (no free
+// download; the free web version is the top-of-funnel). Extra packs £4.99 each.
+// "Chronoline Complete" £19.99+ unlocks every pack plus all future maps; its
+// price scales up as the catalogue grows. No subscription.
 // Soft paywall = a locked pack is fully browsable at the overview; only deep
 // zoom (the fan), compare and search raise a gentle unlock bar. Never a wall.
+
+/** Paid app price (App Store), includes Cosmos + History. */
+export const APP_PRICE = '£9.99'
 
 export type MapStatus = 'included' | 'owned' | 'locked' | 'coming-soon'
 export type Lens = 'cosmos' | 'history'
@@ -48,7 +53,7 @@ export const CATALOG: CatalogEntry[] = [
     tagline: 'Four billion years of life',
     color: '#2FA98C',
     status: 'coming-soon',
-    price: '£2.99',
+    price: '£4.99',
     blurb: 'First cells to us. Clades run as lines; zoom one open into its orders and families. The whole tree of life on a single scale.',
   },
   {
@@ -57,7 +62,7 @@ export const CATALOG: CatalogEntry[] = [
     tagline: 'Sunlit surface to the trench',
     color: '#4C82C3',
     status: 'coming-soon',
-    price: '£2.99',
+    price: '£4.99',
     blurb: 'Depth is the axis. Life, shipwrecks and geology from the waves down to the crushing hadal deep.',
   },
   {
@@ -66,13 +71,13 @@ export const CATALOG: CatalogEntry[] = [
     tagline: "Earth's geological eras",
     color: '#E07A3E',
     status: 'coming-soon',
-    price: '£2.99',
+    price: '£4.99',
     blurb: 'Eons, periods and the five great extinctions on one unbroken scale. See how thin the age of humans really is.',
   },
 ]
 
 export const COMPLETE = {
   name: 'Chronoline Complete',
-  price: '£9.99',
-  blurb: 'Every pack, plus every future map. One payment, yours forever.',
+  price: '£19.99',
+  blurb: 'Every pack, plus every future map. The whole atlas, one payment, yours forever.',
 }

@@ -78,7 +78,7 @@ export default function Atlas({ onOpen, onClose }: { onOpen: (l: Lens) => void; 
           <RNText style={{ color: MUTED, fontSize: 13, marginTop: 6, lineHeight: 19 }}>{COMPLETE.blurb}</RNText>
         </View>
 
-        <RNText style={{ color: FAINT, fontSize: 11, textAlign: 'center', marginTop: 6 }}>Packs arrive as updates. Complete always covers every future map.</RNText>
+        <RNText style={{ color: FAINT, fontSize: 11, textAlign: 'center', marginTop: 6 }}>Cosmos and History come with the app. Packs arrive as updates; Complete always covers every future map.</RNText>
       </ScrollView>
     </View>
   )
