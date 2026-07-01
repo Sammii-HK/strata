@@ -1,14 +1,20 @@
 {
   "expo": {
-    "name": "Chronoline",
+    "name": "Strata",
     "slug": "chronoline-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
+    "description": "One engine, many worlds. Zoom a single scale from the ISS overhead to the edge of the universe, or across all of recorded history, everything to true scale.",
+    "primaryColor": "#e8b84b",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.sammii.chronoline"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.sammii.chronoline",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.sammii.chronoline",
@@ -22,6 +28,20 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#101218",
+          "dark": {
+            "backgroundColor": "#101218"
+          }
+        }
+      ]
+    ]
   }
 }

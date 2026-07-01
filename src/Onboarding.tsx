@@ -15,7 +15,7 @@ export default function Onboarding({ lens, onDone }: { lens: 'cosmos' | 'history
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(8,9,12,0.86)', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 24 }}>
       <View style={{ width: '100%', maxWidth: 360, backgroundColor: '#14161b', borderRadius: 18, borderWidth: 1, borderColor: '#2a2f39', padding: 26 }}>
-        <Text style={{ color: '#e9eaee', fontSize: 28, fontWeight: '600', marginBottom: 4 }}>Chronoline</Text>
+        <Text style={{ color: '#e9eaee', fontSize: 28, fontWeight: '600', marginBottom: 4 }}>Strata</Text>
         <Text style={{ color: '#9aa1ac', fontSize: 15, lineHeight: 21, marginBottom: 20 }}>{tagline}</Text>
 
         {HINTS.map((h) => (

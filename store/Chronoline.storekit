@@ -1,0 +1,76 @@
+{
+  "identifier" : "CHRONOLINE_STOREKIT",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "CL0001",
+      "localizations" : [
+        {
+          "description" : "Four billion years of life on one scale. Clades as lines; zoom one into its orders and families.",
+          "displayName" : "Evolution pack",
+          "locale" : "en_GB"
+        }
+      ],
+      "productID" : "com.sammii.chronoline.evolution",
+      "referenceName" : "Evolution pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "CL0002",
+      "localizations" : [
+        {
+          "description" : "Sunlit surface to the hadal trench. Depth is the axis; life, wrecks and geology.",
+          "displayName" : "Oceans pack",
+          "locale" : "en_GB"
+        }
+      ],
+      "productID" : "com.sammii.chronoline.oceans",
+      "referenceName" : "Oceans pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "CL0003",
+      "localizations" : [
+        {
+          "description" : "Earth's geological eras and the five great extinctions on one unbroken scale.",
+          "displayName" : "Deep Time pack",
+          "locale" : "en_GB"
+        }
+      ],
+      "productID" : "com.sammii.chronoline.deeptime",
+      "referenceName" : "Deep Time pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "19.99",
+      "familyShareable" : false,
+      "internalID" : "CL0100",
+      "localizations" : [
+        {
+          "description" : "Every pack, plus every future map. The whole atlas, one payment.",
+          "displayName" : "Chronoline Complete",
+          "locale" : "en_GB"
+        }
+      ],
+      "productID" : "com.sammii.chronoline.complete",
+      "referenceName" : "Chronoline Complete",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_GB",
+    "_storefront" : "GBR"
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

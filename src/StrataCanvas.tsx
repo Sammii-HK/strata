@@ -1,4 +1,4 @@
-import { useContext, useMemo, useRef, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, Text as RNText, TextInput, useWindowDimensions, View } from 'react-native'
 import { Canvas, Fill, Group, Line, Circle, Text, matchFont, vec } from '@shopify/react-native-skia'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -74,6 +74,27 @@ export default function StrataCanvas() {
   }, [config, allSubs])
   const subIndex = useMemo(() => new Map(subNames.map((c, i) => [c, i])), [subNames])
 
+  // Open framed on config.axis.frame (e.g. Earth's neighbourhood) instead of the
+  // flat whole-span overview. Runs once per map on mount.
+  useEffect(() => {
+    const f = config?.axis.frame
+    if (!config || !f) return
+    const axL = (v: number) => (config.scale === 'log' ? Math.log10(v) : v)
+    let lov = Infinity
+    let hiv = -Infinity
+    for (const o of config.items) {
+      lov = Math.min(lov, o.pos)
+      hiv = Math.max(hiv, o.pos)
+    }
+    const loA = axL(lov)
+    const hiA = axL(hiv)
+    const uu = (v: number) => (axL(v) - loA) / (hiA - loA)
+    const span = Math.max(1e-6, uu(f[1]) - uu(f[0]))
+    const nk = Math.max(0.85, Math.min(60, 1 / span))
+    const tx = Math.max(120 - W * nk, Math.min(W - 120, -uu(f[0]) * W * nk))
+    setView({ k: nk, tx })
+  }, [config, W])
+
   if (!config) return <View style={{ flex: 1, backgroundColor: BG }} />
 
   const ITEMS = config.items
@@ -148,7 +169,7 @@ export default function StrataCanvas() {
   const usableH = H - TOP - BOTTOM
   const mSub = Math.max(1, subNames.length)
 
-  const sp = fanIdx >= 0 ? smooth(clamp((k - 2) / 3, 0, 1)) : 0
+  const sp = fanIdx >= 0 ? smooth(clamp((k - 3) / 3, 0, 1)) : 0
   const zFrac = fanIdx >= 0 ? lerp(1 / n, 0.82, sp) : 1 / n
   const otherFrac = n > 1 ? (1 - zFrac) / (n - 1) : 1
   const bands: { top: number; h: number }[] = []
@@ -339,7 +360,7 @@ export default function StrataCanvas() {
       {/* ---- header ---- */}
       <View style={{ position: 'absolute', top: 50, left: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 8, zIndex: 10 }}>
         <Pressable onPress={() => { setMapMenuOpen((v) => !v); setMenuOpen(false) }}>
-          <RNText style={{ color: '#e9eaee', fontSize: 16, fontWeight: '500' }}>Chronoline · {config.name} ▾</RNText>
+          <RNText style={{ color: '#e9eaee', fontSize: 16, fontWeight: '500' }}>Strata · {config.name} ▾</RNText>
         </Pressable>
         <Pressable style={btn} onPress={() => { setMenuOpen((v) => !v); setMapMenuOpen(false) }}>
           <RNText style={{ color: '#e9eaee', fontSize: 13 }}>Options ▾</RNText>

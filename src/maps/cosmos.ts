@@ -56,7 +56,9 @@ export const cosmosConfig: StrataConfig = {
   name: 'Cosmos',
   tagline: 'the scale of the universe',
   scale: 'log',
-  axis: { kind: 'distance', format: fmtDist, ticks: [3.17e-8, 1.581e-5, 1.581e-2, 1, 100, 1e4, 1e6, 1e8, 1e10] },
+  // Open framed on Earth's neighbourhood (Moon, Sun, planets out to the nearest
+  // stars) so the map lands rich and relatable; pinch out for the vastness.
+  axis: { kind: 'distance', format: fmtDist, ticks: [3.17e-8, 1.581e-5, 1.581e-2, 1, 100, 1e4, 1e6, 1e8, 1e10], frame: [1e-8, 12] },
   lanes: LANES,
   fanLanes: ['zodiac'],
   fanPrimary: ZODIAC,

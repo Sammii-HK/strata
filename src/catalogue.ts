@@ -4,7 +4,7 @@
 //
 // Pricing model: PAID app £9.99 one-time, includes Cosmos & History (no free
 // download; the free web version is the top-of-funnel). Extra packs £4.99 each.
-// "Chronoline Complete" £19.99+ unlocks every pack plus all future maps; its
+// "Strata Complete" £19.99+ unlocks every pack plus all future maps; its
 // price scales up as the catalogue grows. No subscription.
 // Soft paywall = a locked pack is fully browsable at the overview; only deep
 // zoom (the fan), compare and search raise a gentle unlock bar. Never a wall.
@@ -76,8 +76,15 @@ export const CATALOG: CatalogEntry[] = [
   },
 ]
 
+/** Pack ids unlocked given active RevenueCat entitlements. 'complete' grants all packs. (Phase 2) */
+export function ownedPackIds(active: Set<string>): Set<string> {
+  const packs = CATALOG.filter((e) => e.price).map((e) => e.id)
+  if (active.has('complete')) return new Set(packs)
+  return new Set(packs.filter((id) => active.has(id)))
+}
+
 export const COMPLETE = {
-  name: 'Chronoline Complete',
+  name: 'Strata Complete',
   price: '£19.99',
   blurb: 'Every pack, plus every future map. The whole atlas, one payment, yours forever.',
 }

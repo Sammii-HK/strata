@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, Pressable, Text as RNText, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
@@ -6,6 +6,7 @@ import Onboarding from './src/Onboarding';
 import Atlas from './src/Atlas';
 import { MapContext, type Lens } from './src/mapContext';
 import { cosmosConfig } from './src/maps/cosmos';
+import { configurePurchases } from './src/purchases';
 
 let seenIntro = false;
 
@@ -18,7 +19,7 @@ function LensView({ lens }: { lens: Lens }) {
       <WithSkiaWeb
         opts={{ locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/canvaskit-wasm@0.41.0/bin/full/${file}` }}
         getComponent={() => (lens === 'cosmos' ? import('./src/StrataCanvas') : import('./src/TimelineCanvas'))}
-        fallback={<RNText style={{ color: '#e9eaee', padding: 24 }}>Loading Chronoline…</RNText>}
+        fallback={<RNText style={{ color: '#e9eaee', padding: 24 }}>Loading Strata…</RNText>}
       />
     );
   }
@@ -30,6 +31,7 @@ export default function App() {
   const [lens, setLens] = useState<Lens>('cosmos');
   const [showIntro, setShowIntro] = useState(!seenIntro);
   const [showAtlas, setShowAtlas] = useState(false);
+  useEffect(() => { configurePurchases(); }, []);
   const config = lens === 'cosmos' ? cosmosConfig : null;
   const openAtlas = () => setShowAtlas(true);
   return (
