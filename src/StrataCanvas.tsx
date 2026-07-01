@@ -311,19 +311,26 @@ export default function StrataCanvas() {
   const laneNameOf = (id: string) => LANE_MAP[id]?.name ?? id
 
   const shellState = shellOn
-    ? LANES.map((cat) => {
-        let best: StrataItem | null = null
-        let bd = Infinity
-        for (const o of ITEMS) {
-          if (o.lane !== cat.id) continue
-          const d = Math.abs(ax(o.pos) - ax(shellPos))
-          if (d < bd) {
-            bd = d
-            best = o
+    ? (() => {
+        // Only surface a line's event if it's genuinely "meanwhile": within a
+        // fraction of the on-screen span of the scrubber. Otherwise the globally
+        // nearest event (e.g. Islam at 610 AD) would show even at 3000 BC.
+        const visSpan = Math.abs(ax(posAtPx(W)) - ax(posAtPx(0)))
+        const thresh = visSpan * 0.35
+        return LANES.map((cat) => {
+          let best: StrataItem | null = null
+          let bd = Infinity
+          for (const o of ITEMS) {
+            if (o.lane !== cat.id) continue
+            const d = Math.abs(ax(o.pos) - ax(shellPos))
+            if (d < bd) {
+              bd = d
+              best = o
+            }
           }
-        }
-        return { cat, o: best }
-      })
+          return { cat, o: best && bd <= thresh ? best : null }
+        })
+      })()
     : []
 
   const runSearch = () => {
