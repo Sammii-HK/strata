@@ -100,6 +100,7 @@ platform :ios do
       output_name: "Strata.ipa",
       clean: false,
       include_symbols: true,
+      xcargs: "-allowProvisioningUpdates -authenticationKeyID GMGDL7Q7NA -authenticationKeyIssuerID 7c17ab57-29f9-4083-9839-ea15adf32cc5 -authenticationKeyPath /Users/sammii/.appstoreconnect/AuthKey_GMGDL7Q7NA.p8",
       export_options: { method: "app-store", teamID: "ASG43SHM5N" }
     )
   end

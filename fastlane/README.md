@@ -55,10 +55,10 @@ Submit the current build for review — PUBLISHES. Run only with explicit approv
 
 Archive a Release IPA for the App Store (Expo workspace)
 
-### ios testflight
+### ios upload_build
 
 ```sh
-[bundle exec] fastlane ios testflight
+[bundle exec] fastlane ios upload_build
 ```
 
 Upload the archived IPA to TestFlight / App Store Connect
