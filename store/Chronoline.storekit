@@ -13,7 +13,7 @@
           "locale" : "en_GB"
         }
       ],
-      "productID" : "com.sammii.chronoline.evolution",
+      "productID" : "app.lunary.strata.evolution",
       "referenceName" : "Evolution pack",
       "type" : "NonConsumable"
     },
@@ -28,7 +28,7 @@
           "locale" : "en_GB"
         }
       ],
-      "productID" : "com.sammii.chronoline.oceans",
+      "productID" : "app.lunary.strata.oceans",
       "referenceName" : "Oceans pack",
       "type" : "NonConsumable"
     },
@@ -43,7 +43,7 @@
           "locale" : "en_GB"
         }
       ],
-      "productID" : "com.sammii.chronoline.deeptime",
+      "productID" : "app.lunary.strata.deeptime",
       "referenceName" : "Deep Time pack",
       "type" : "NonConsumable"
     },
@@ -58,7 +58,7 @@
           "locale" : "en_GB"
         }
       ],
-      "productID" : "com.sammii.chronoline.complete",
+      "productID" : "app.lunary.strata.complete",
       "referenceName" : "Chronoline Complete",
       "type" : "NonConsumable"
     }

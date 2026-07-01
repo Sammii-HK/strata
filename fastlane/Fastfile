@@ -16,7 +16,7 @@
 require "json"
 
 ASC_KEY_JSON = File.expand_path(ENV["ASC_KEY_JSON"] || "~/.appstoreconnect/fastlane_api_key.json")
-APP_ID = "com.sammii.chronoline"
+APP_ID = "app.lunary.strata"
 
 platform :ios do
   # Authenticate every lane with the ASC API key (produce also reads it from here).

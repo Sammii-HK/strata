@@ -7,7 +7,7 @@ Ship Strata as a plain £9.99 paid app (Cosmos + History). Packs + Complete
 come as a later update once IAP is wired. This keeps v1 fast and review-clean.
 
 ### App config
-- ✅ `app.json`: bundle `com.sammii.chronoline`, version 1.0.0, build 1, dark UI, portrait, iPhone-only (`supportsTablet: false` so no iPad screenshots needed), `usesNonExemptEncryption: false` (skips the export-compliance prompt each build).
+- ✅ `app.json`: bundle `app.lunary.strata`, version 1.0.0, build 1, dark UI, portrait, iPhone-only (`supportsTablet: false` so no iPad screenshots needed), `usesNonExemptEncryption: false` (skips the export-compliance prompt each build).
 - 🎨 **App icon** (you): drop a 1024×1024 PNG (no alpha, no rounded corners) at `assets/icon.png`. Android adaptive icons already referenced.
 - ✅ **App name**: **Strata** (set in `app.json` + throughout the app). Just enter it in ASC when you create the listing.
 
@@ -38,17 +38,17 @@ Products are wired to be inert until you complete the dashboard steps below.
 Create these as **Non-Consumable** in-app purchases (NOT auto-renewing):
 | Product ID | Name | Price | Family Shareable |
 |------------|------|-------|------------------|
-| `com.sammii.chronoline.evolution` | Evolution pack | £4.99 | **OFF** |
-| `com.sammii.chronoline.oceans` | Oceans pack | £4.99 | **OFF** |
-| `com.sammii.chronoline.deeptime` | Deep Time pack | £4.99 | **OFF** |
-| `com.sammii.chronoline.complete` | Strata Complete | £19.99 | **OFF** |
+| `app.lunary.strata.evolution` | Evolution pack | £4.99 | **OFF** |
+| `app.lunary.strata.oceans` | Oceans pack | £4.99 | **OFF** |
+| `app.lunary.strata.deeptime` | Deep Time pack | £4.99 | **OFF** |
+| `app.lunary.strata.complete` | Strata Complete | £19.99 | **OFF** |
 
 - ⚠️ For EACH product, in its ASC page, ensure **"Family Sharing" is turned OFF**
   (Apple defaults non-consumables to shareable-eligible; you must disable it).
 - Fill each product's display name, description, and a review screenshot.
 
 ### RevenueCat dashboard (🔑 you)
-1. Create a RevenueCat project, add the iOS app (bundle `com.sammii.chronoline`).
+1. Create a RevenueCat project, add the iOS app (bundle `app.lunary.strata`).
 2. Add the App Store shared secret + an App Store Connect API key so RC can validate.
 3. Create **Entitlements**:
    - `evolution`, `oceans`, `deeptime` (one per pack), attach the matching product.

@@ -10,7 +10,8 @@
     "primaryColor": "#e8b84b",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.sammii.chronoline",
+      "bundleIdentifier": "app.lunary.strata",
+      "appleTeamId": "ASG43SHM5N",
       "buildNumber": "1",
       "config": {
         "usesNonExemptEncryption": false
@@ -41,7 +42,8 @@
             "backgroundColor": "#101218"
           }
         }
-      ]
+      ],
+      ["@bacons/apple-targets", { "appleTeamId": "ASG43SHM5N" }]
     ]
   }
 }
