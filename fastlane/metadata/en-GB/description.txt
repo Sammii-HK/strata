@@ -1,0 +1,21 @@
+One engine, many worlds.
+
+Strata is a single, living map you can zoom. Start at the whole picture, then zoom in and every line opens into many. Everything sits at its true scale, so the distances and the gaps are real, not decorative.
+
+Two maps are included:
+
+Cosmos. From the space station just overhead, out past the planets, the nearest stars, every visible constellation, the Milky Way, and on to the edge of the observable universe. Zoom into a constellation and it splits into its real stars at their true distances, the shape was only ever a trick of our viewing angle.
+
+History. Civilisations, ideas and events as parallel coloured lines, like a tube map of the past. Zoom a region open into its countries. See what was happening everywhere else at any single moment.
+
+What you can do:
+- Zoom smoothly from the tiniest detail to the whole span
+- Tap anything to see what it is
+- Tap two things to measure the gap between them
+- Sweep a glass cross-section across the map to read every line at once
+- Search, and jump straight to it
+- Turn individual lines on and off to focus
+
+More maps are on the way, Evolution, Oceans, Deep Time, each one the same lens pointed at a new subject.
+
+No accounts. No ads. No tracking. Just something beautiful to get lost in.
