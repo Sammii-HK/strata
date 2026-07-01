@@ -16,6 +16,7 @@ const L10 = Math.log10
 const BG = '#101218'
 const TOP = 112
 const BOTTOM = 46
+const SCRUB_H = 58 // persistent x-axis scrubber track along the bottom
 
 const fontStyle = { fontFamily: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }) as string, fontSize: 11 }
 const fontBoldStyle = { fontFamily: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }) as string, fontSize: 12, fontWeight: '600' as const }
@@ -34,9 +35,7 @@ export default function StrataCanvas() {
   const lastScale = useRef(1)
 
   const [sel, setSel] = useState<string[]>([])
-  const [shellOn, setShellOn] = useState(false)
-  const shellOnRef = useRef(false)
-  shellOnRef.current = shellOn
+  const [shellOn, setShellOn] = useState(false) // cross-section (meanwhile) panel visible
   const [shellPos, setShellPos] = useState(1000)
   const [allSubs, setAllSubs] = useState(false)
   const [hidden, setHidden] = useState<Set<string>>(() => new Set())
@@ -84,6 +83,8 @@ export default function StrataCanvas() {
     const nk = Math.max(1, Math.min(60, 1 / span))
     const tx = Math.max(W - W * nk, Math.min(0, -uu(f[0]) * W * nk))
     setView({ k: nk, tx })
+    const midA = (axL(f[0]) + axL(f[1])) / 2
+    setShellPos(config.scale === 'log' ? Math.pow(10, midA) : midA)
   }, [config, W])
 
   // Reset transient state when switching maps.
@@ -171,12 +172,16 @@ export default function StrataCanvas() {
   const pan = Gesture.Pan()
     .runOnJS(true)
     .onChange((e) => {
-      if (shellOnRef.current) {
-        setShellPos(clamp(posAtPx(e.x), loP, hiP))
-        return
-      }
       setView((v) => ({ k: v.k, tx: clampTx(v.tx + e.changeX, v.k, W) }))
     })
+  // The scrubber track has its own pan/tap gesture that sets shellPos.
+  const scrub = Gesture.Pan()
+    .runOnJS(true)
+    .onBegin((e) => { setShellOn(true); setShellPos(clamp(posAtPx(e.x), loP, hiP)) })
+    .onChange((e) => setShellPos(clamp(posAtPx(e.x), loP, hiP)))
+  const scrubTap = Gesture.Tap()
+    .runOnJS(true)
+    .onEnd((e) => { setShellOn(true); setShellPos(clamp(posAtPx(e.x), loP, hiP)) })
   const pinch = Gesture.Pinch()
     .runOnJS(true)
     .onBegin(() => {
@@ -215,7 +220,7 @@ export default function StrataCanvas() {
   // the fan lane expands into sub-lanes on zoom ----
   // Condense the lines when any bottom sheet is up (scrubber or a tapped-item
   // readout) so it never covers a line or the selected item.
-  const usableH = H - TOP - BOTTOM - (shellOn || sel.length > 0 ? 180 : 0)
+  const usableH = H - TOP - BOTTOM - SCRUB_H - (shellOn || sel.length > 0 ? 150 : 0)
   const mSub = Math.max(1, subNames.length)
   const visLanes = LANES.filter((l) => !hidden.has(l.id))
   const nVis = Math.max(1, visLanes.length)
@@ -347,8 +352,8 @@ export default function StrataCanvas() {
 
           {ticks.map((t) => (
             <Group key={`t${t.d}`}>
-              <Line p1={vec(t.x, TOP - 8)} p2={vec(t.x, H - BOTTOM + 8)} color="#23272f" strokeWidth={0.5} />
-              {font && <Text x={t.x - 20} y={H - BOTTOM + 24} text={fmt(t.d)} font={font} color="#6a7280" />}
+              <Line p1={vec(t.x, TOP - 8)} p2={vec(t.x, H - BOTTOM - SCRUB_H +8)} color="#23272f" strokeWidth={0.5} />
+              {font && <Text x={t.x - 20} y={H - BOTTOM - SCRUB_H +24} text={fmt(t.d)} font={font} color="#6a7280" />}
             </Group>
           ))}
 
@@ -378,7 +383,7 @@ export default function StrataCanvas() {
 
           {shellOn && (
             <Group>
-              <Line p1={vec(shellX, TOP - 10)} p2={vec(shellX, H - BOTTOM + 8)} color="#e8b84b" strokeWidth={1.5} />
+              <Line p1={vec(shellX, TOP - 10)} p2={vec(shellX, H - BOTTOM - SCRUB_H +8)} color="#e8b84b" strokeWidth={1.5} />
               {font && <Text x={shellX - 30} y={TOP - 16} text={fmt(shellPos)} font={font} color="#e8b84b" />}
             </Group>
           )}
@@ -487,10 +492,6 @@ export default function StrataCanvas() {
       {menuOpen && (
         <View style={{ position: 'absolute', top: 82, left: 90, zIndex: 30, minWidth: 210, maxHeight: H - 160, ...menuBox }}>
           <ScrollView>
-            <Pressable style={item} onPress={() => { if (!shellOn) setShellPos(posAtPx(W / 2)); setShellOn((v) => !v) }}>
-              <RNText style={{ color: '#e9eaee', fontSize: 13 }}>{config.scrubberLabel}</RNText>
-              <RNText style={{ color: '#e8b84b' }}>{shellOn ? '✓' : ''}</RNText>
-            </Pressable>
             {config.fanFeatured && config.fanToggleLabel && (
               <Pressable style={item} onPress={() => setAllSubs((v) => !v)}>
                 <RNText style={{ color: '#e9eaee', fontSize: 13 }}>{config.fanToggleLabel}</RNText>
@@ -514,7 +515,7 @@ export default function StrataCanvas() {
 
       {/* ---- readout ---- */}
       {!shellOn && selObjs.length === 1 && (
-        <View style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
+        <View style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
               <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: LANE_MAP[selObjs[0].lane]?.color ?? '#e8b84b' }} />
@@ -532,7 +533,7 @@ export default function StrataCanvas() {
       )}
 
       {!shellOn && selObjs.length === 2 && (
-        <View style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
+        <View style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <RNText style={{ color: '#9aa1ac', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>The gap</RNText>
             <Pressable onPress={() => setSel([])} hitSlop={12}>
@@ -549,7 +550,7 @@ export default function StrataCanvas() {
 
       {/* ---- glass cross-section scrubber (chip list) ---- */}
       {shellOn && sheetIdx < 0 && (
-        <BlurView intensity={36} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 13, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' }}>
+        <BlurView intensity={36} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 13, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' }}>
           <View style={{ padding: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <RNText style={{ color: '#e9eaee', fontSize: 13 }}>
@@ -582,7 +583,7 @@ export default function StrataCanvas() {
         const cur = byId.get(sheetHist[sheetIdx])
         if (!cur) return null
         return (
-          <BlurView intensity={40} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 14, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' }}>
+          <BlurView intensity={40} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 14, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' }}>
             <View style={{ padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
@@ -610,6 +611,17 @@ export default function StrataCanvas() {
           </BlurView>
         )
       })()}
+
+      {/* ---- persistent x-axis scrubber track ---- */}
+      <GestureDetector gesture={Gesture.Simultaneous(scrub, scrubTap)}>
+        <BlurView intensity={44} tint="dark" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: SCRUB_H, zIndex: 15, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.12)' }}>
+          <View style={{ flex: 1 }}>
+            <View style={{ position: 'absolute', left: 16, right: 16, top: SCRUB_H / 2 + 4, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.16)' }} />
+            <RNText style={{ position: 'absolute', left: clamp(shellX - 44, 6, W - 94), top: 8, width: 88, textAlign: 'center', color: '#e8b84b', fontSize: 12, fontWeight: '700' }}>{fmt(shellPos)}</RNText>
+            <View style={{ position: 'absolute', left: clamp(shellX - 11, 5, W - 27), top: SCRUB_H / 2 - 6, width: 22, height: 22, borderRadius: 11, backgroundColor: '#e8b84b', borderWidth: 2, borderColor: 'rgba(255,255,255,0.6)' }} />
+          </View>
+        </BlurView>
+      </GestureDetector>
     </View>
   )
 }
