@@ -61,19 +61,6 @@ export default function StrataCanvas() {
     return [lo, hi]
   }, [config])
   const laneIndex = useMemo(() => new Map((config?.lanes ?? []).map((c, i) => [c.id, i])), [config])
-  const subNames = useMemo(() => {
-    const fanId = config?.fanLanes?.[0]
-    if (!config || !fanId) return [] as string[]
-    const s = new Set<string>()
-    for (const o of config.items) if (o.lane === fanId && o.sub) s.add(o.sub)
-    const primary = (config.fanPrimary ?? []).filter((x) => s.has(x))
-    const featured = config.fanFeatured ? new Set(config.fanFeatured) : null
-    let rest = [...s].filter((x) => !primary.includes(x))
-    if (featured && !allSubs) rest = rest.filter((x) => featured.has(x))
-    rest.sort()
-    return [...primary, ...rest]
-  }, [config, allSubs])
-  const subIndex = useMemo(() => new Map(subNames.map((c, i) => [c, i])), [subNames])
 
   // Open framed on config.axis.frame (e.g. Earth's neighbourhood) instead of the
   // flat whole-span overview. Runs once per map on mount.
@@ -105,8 +92,6 @@ export default function StrataCanvas() {
   const inv = (a: number) => (isLog ? Math.pow(10, a) : a)
   const fmt = config.axis.format
   const fmtSpan = config.formatSpan ?? config.axis.format
-  const fanLaneId = config.fanLanes?.[0]
-  const fanIdx = fanLaneId ? LANES.findIndex((l) => l.id === fanLaneId) : -1
   const lo = ax(loP)
   const hi = ax(hiP)
 
@@ -116,9 +101,51 @@ export default function StrataCanvas() {
   const posAtPx = (px: number) => inv(lo + ((px - viewRef.current.tx) / (W * viewRef.current.k)) * (hi - lo))
   const k = view.k
 
+  // Position-aware fan: whichever fannable lane is most centred on screen opens
+  // (so zooming into the Solar System opens it; into the constellations opens them).
+  const fanCandidates = config.fanLanes ?? []
+  let fanLaneId: string | undefined
+  {
+    let best = Infinity
+    for (const id of fanCandidates) {
+      let sum = 0
+      let cnt = 0
+      for (const o of ITEMS) {
+        if (o.lane !== id || !o.sub) continue
+        const x = sx(o.pos)
+        if (x < -60 || x > W + 60) continue
+        sum += x
+        cnt++
+      }
+      if (!cnt) continue
+      const score = Math.abs(sum / cnt - W / 2)
+      if (score < best) {
+        best = score
+        fanLaneId = id
+      }
+    }
+    if (!fanLaneId && fanCandidates.length) fanLaneId = fanCandidates[0]
+  }
+  const fanIdx = fanLaneId ? LANES.findIndex((l) => l.id === fanLaneId) : -1
+  const subNames = (() => {
+    if (!fanLaneId) return [] as string[]
+    const s = new Set<string>()
+    for (const o of ITEMS) if (o.lane === fanLaneId && o.sub) s.add(o.sub)
+    const primary = (config.fanPrimary ?? []).filter((x) => s.has(x))
+    const featured = config.fanFeatured ? new Set(config.fanFeatured) : null
+    let rest = [...s].filter((x) => !primary.includes(x))
+    if (featured && !allSubs) {
+      const f = rest.filter((x) => featured.has(x))
+      if (f.length) rest = f // only applies where featured matches (constellations), not the Solar System
+    }
+    rest.sort()
+    return [...primary, ...rest]
+  })()
+  const subIndex = new Map(subNames.map((c, i) => [c, i]))
+
   const zoomBy = (f: number) =>
     setView((v) => {
-      const nk = clamp(v.k * f, 0.85, 60)
+      const nk = clamp(v.k * f, 0.85, 300)
       return { k: nk, tx: clampTx(W / 2 - (W / 2 - v.tx) * (nk / v.k), nk, W) }
     })
 
@@ -140,7 +167,7 @@ export default function StrataCanvas() {
       const f = e.scale / lastScale.current
       lastScale.current = e.scale
       setView((v) => {
-        const nk = clamp(v.k * f, 0.85, 60)
+        const nk = clamp(v.k * f, 0.85, 300)
         return { k: nk, tx: clampTx(e.focalX - (e.focalX - v.tx) * (nk / v.k), nk, W) }
       })
     })
@@ -301,7 +328,12 @@ export default function StrataCanvas() {
             if (hidden.has(c.id)) return null
             const y = laneCenterY(i)
             const isFan = c.id === fanLaneId
-            return <Line key={c.id} p1={vec(clamp(sx(loP), 0, W), y)} p2={vec(clamp(sx(hiP), 0, W), y)} color={c.color} strokeWidth={2.4} strokeCap="round" opacity={isFan ? 0.85 * (1 - sp) : 0.85} />
+            return (
+              <Group key={c.id}>
+                <Line p1={vec(clamp(sx(loP), 0, W), y)} p2={vec(clamp(sx(hiP), 0, W), y)} color={c.color} strokeWidth={2.4} strokeCap="round" opacity={isFan ? 0.85 * (1 - sp) : 0.85} />
+                {font && <Text x={8} y={y - 7} text={c.name} font={font} color={c.color} opacity={isFan ? Math.max(0, 1 - sp * 1.6) : 0.92} />}
+              </Group>
+            )
           })}
 
           {fanLaneId && fanIdx >= 0 && !hidden.has(fanLaneId) && sp > 0.02 &&
