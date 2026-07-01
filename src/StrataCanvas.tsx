@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { Platform, Pressable, ScrollView, Text as RNText, TextInput, useWindowDimensions, View } from 'react-native'
+import { Keyboard, Platform, Pressable, ScrollView, Text as RNText, TextInput, useWindowDimensions, View } from 'react-native'
 import { Canvas, Fill, Group, Line, Circle, Text, matchFont, vec } from '@shopify/react-native-skia'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { BlurView } from 'expo-blur'
@@ -60,7 +60,6 @@ export default function StrataCanvas() {
     if (!isFinite(lo)) return [0, 1]
     return [lo, hi]
   }, [config])
-  const laneIndex = useMemo(() => new Map((config?.lanes ?? []).map((c, i) => [c.id, i])), [config])
 
   // Open framed on config.axis.frame (e.g. Earth's neighbourhood) instead of the
   // flat whole-span overview. Runs once per map on mount.
@@ -192,36 +191,43 @@ export default function StrataCanvas() {
     })
   const gesture = Gesture.Simultaneous(pan, pinch, tap)
 
-  // ---- layout: one band per lane; fan lane expands into sub-lanes on zoom ----
-  const n = LANES.length
+  // ---- layout: one band per VISIBLE lane (hidden lanes reclaim their space);
+  // the fan lane expands into sub-lanes on zoom ----
   const usableH = H - TOP - BOTTOM
   const mSub = Math.max(1, subNames.length)
+  const visLanes = LANES.filter((l) => !hidden.has(l.id))
+  const nVis = Math.max(1, visLanes.length)
+  const visPos = new Map(visLanes.map((l, vp) => [l.id, vp]))
+  const fanVis = fanLaneId != null ? visPos.get(fanLaneId) ?? -1 : -1
 
-  const sp = fanIdx >= 0 ? smooth(clamp((k - 3) / 3, 0, 1)) : 0
-  const zFrac = fanIdx >= 0 ? lerp(1 / n, 0.82, sp) : 1 / n
-  const otherFrac = n > 1 ? (1 - zFrac) / (n - 1) : 1
+  const sp = fanVis >= 0 ? smooth(clamp((k - 3) / 3, 0, 1)) : 0
+  const zFrac = fanVis >= 0 ? lerp(1 / nVis, 0.82, sp) : 1 / nVis
+  const otherFrac = nVis > 1 ? (1 - zFrac) / (nVis - 1) : 1
   const bands: { top: number; h: number }[] = []
   {
     let acc = TOP
-    for (let i = 0; i < n; i++) {
-      const bh = usableH * (i === fanIdx ? zFrac : otherFrac)
+    for (let vp = 0; vp < nVis; vp++) {
+      const bh = usableH * (vp === fanVis ? zFrac : otherFrac)
       bands.push({ top: acc, h: bh })
       acc += bh
     }
   }
-  const laneCenterY = (i: number) => bands[i].top + bands[i].h / 2
+  const laneCenterY = (laneId: string) => {
+    const vp = visPos.get(laneId)
+    if (vp == null) return -1000
+    return bands[vp].top + bands[vp].h / 2
+  }
   const subY = (si: number) => {
-    const b = bands[fanIdx]
+    const b = bands[fanVis >= 0 ? fanVis : 0]
     const pad = b.h * 0.05
     return b.top + pad + ((b.h - 2 * pad) * (si + 0.5)) / mSub
   }
   const objY = (o: StrataItem) => {
-    const i = laneIndex.get(o.lane) ?? 0
     if (fanLaneId && o.lane === fanLaneId && sp > 0.02 && o.sub) {
       const si = subIndex.get(o.sub)
-      if (si != null) return lerp(laneCenterY(i), subY(si), sp)
+      if (si != null) return lerp(laneCenterY(o.lane), subY(si), sp)
     }
-    return laneCenterY(i)
+    return laneCenterY(o.lane)
   }
 
   const showImp = (i: number) => (i <= 3 ? true : k >= 2.2)
@@ -324,9 +330,9 @@ export default function StrataCanvas() {
             </Group>
           ))}
 
-          {LANES.map((c, i) => {
+          {LANES.map((c) => {
             if (hidden.has(c.id)) return null
-            const y = laneCenterY(i)
+            const y = laneCenterY(c.id)
             const isFan = c.id === fanLaneId
             return (
               <Group key={c.id}>
@@ -336,10 +342,10 @@ export default function StrataCanvas() {
             )
           })}
 
-          {fanLaneId && fanIdx >= 0 && !hidden.has(fanLaneId) && sp > 0.02 &&
+          {fanLaneId && fanVis >= 0 && !hidden.has(fanLaneId) && sp > 0.02 &&
             subNames.map((sign, si) => {
               const y = subY(si)
-              const laneH = (bands[fanIdx].h * 0.9) / mSub
+              const laneH = (bands[fanVis].h * 0.9) / mSub
               return (
                 <Group key={`zs${sign}`}>
                   <Line p1={vec(clamp(sx(loP), 0, W), y)} p2={vec(clamp(sx(hiP), 0, W), y)} color={fanColor} strokeWidth={1} strokeCap="round" opacity={0.16 + 0.4 * sp} />
@@ -390,36 +396,52 @@ export default function StrataCanvas() {
         </Canvas>
       </GestureDetector>
 
+      {/* tap-off layer: closes menus + search when you tap anywhere else */}
+      {(menuOpen || mapMenuOpen || searchOpen) && (
+        <Pressable
+          onPress={() => { setMenuOpen(false); setMapMenuOpen(false); setSearchOpen(false); Keyboard.dismiss() }}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9 }}
+        />
+      )}
+
       {/* ---- header ---- */}
       <View style={{ position: 'absolute', top: 50, left: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 8, zIndex: 10 }}>
-        <Pressable onPress={() => { setMapMenuOpen((v) => !v); setMenuOpen(false) }}>
-          <RNText style={{ color: '#e9eaee', fontSize: 16, fontWeight: '500' }}>Strata · {config.name} ▾</RNText>
-        </Pressable>
-        <Pressable style={btn} onPress={() => { setMenuOpen((v) => !v); setMapMenuOpen(false) }}>
-          <RNText style={{ color: '#e9eaee', fontSize: 13 }}>Options ▾</RNText>
-        </Pressable>
-        <View style={{ flex: 1 }} />
         {searchOpen ? (
-          <TextInput
-            autoFocus
-            value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={runSearch}
-            placeholder="Search…"
-            placeholderTextColor="#6a7280"
-            style={{ backgroundColor: '#181b22', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 8, color: '#e9eaee', paddingVertical: 6, paddingHorizontal: 10, width: 150 }}
-          />
+          <>
+            <TextInput
+              autoFocus
+              value={query}
+              onChangeText={setQuery}
+              onSubmitEditing={runSearch}
+              returnKeyType="search"
+              placeholder="Search…"
+              placeholderTextColor="#6a7280"
+              style={{ flex: 1, backgroundColor: '#181b22', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 8, color: '#e9eaee', paddingVertical: 8, paddingHorizontal: 12, fontSize: 15 }}
+            />
+            <Pressable style={btn} onPress={() => { setSearchOpen(false); setQuery(''); Keyboard.dismiss() }}>
+              <RNText style={{ color: '#e9eaee', fontSize: 15 }}>✕</RNText>
+            </Pressable>
+          </>
         ) : (
-          <Pressable style={btn} onPress={() => setSearchOpen(true)}>
-            <RNText style={{ color: '#e9eaee', fontSize: 15 }}>⌕</RNText>
-          </Pressable>
+          <>
+            <Pressable onPress={() => { setMapMenuOpen((v) => !v); setMenuOpen(false) }}>
+              <RNText style={{ color: '#e9eaee', fontSize: 16, fontWeight: '500' }}>Strata · {config.name} ▾</RNText>
+            </Pressable>
+            <Pressable style={btn} onPress={() => { setMenuOpen((v) => !v); setMapMenuOpen(false) }}>
+              <RNText style={{ color: '#e9eaee', fontSize: 13 }}>Options ▾</RNText>
+            </Pressable>
+            <View style={{ flex: 1 }} />
+            <Pressable style={btn} onPress={() => setSearchOpen(true)}>
+              <RNText style={{ color: '#e9eaee', fontSize: 15 }}>⌕</RNText>
+            </Pressable>
+            <Pressable style={btn} onPress={() => zoomBy(1 / 1.4)}>
+              <RNText style={{ color: '#e9eaee', fontSize: 15 }}>–</RNText>
+            </Pressable>
+            <Pressable style={btn} onPress={() => zoomBy(1.4)}>
+              <RNText style={{ color: '#e9eaee', fontSize: 15 }}>+</RNText>
+            </Pressable>
+          </>
         )}
-        <Pressable style={btn} onPress={() => zoomBy(1 / 1.4)}>
-          <RNText style={{ color: '#e9eaee', fontSize: 15 }}>–</RNText>
-        </Pressable>
-        <Pressable style={btn} onPress={() => zoomBy(1.4)}>
-          <RNText style={{ color: '#e9eaee', fontSize: 15 }}>+</RNText>
-        </Pressable>
       </View>
 
       {mapMenuOpen && (
@@ -481,16 +503,18 @@ export default function StrataCanvas() {
       )}
 
       {!shellOn && selObjs.length === 2 && (
-        <View style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 10, padding: 12 }}>
-          <RNText style={{ color: '#e9eaee', fontSize: 13 }}>
-            <RNText style={{ color: '#e8b84b', fontWeight: '600' }}>{fmtSpan(Math.abs(selObjs[0].pos - selObjs[1].pos))}</RNText> between {selObjs[0].label} and {selObjs[1].label}
-          </RNText>
+        <View style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <RNText style={{ color: '#9aa1ac', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>The gap</RNText>
+            <Pressable onPress={() => setSel([])} hitSlop={12}>
+              <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>clear</RNText>
+            </Pressable>
+          </View>
+          <RNText style={{ color: '#e8b84b', fontSize: 26, fontWeight: '700' }}>{fmtSpan(Math.abs(selObjs[0].pos - selObjs[1].pos))}</RNText>
+          <RNText style={{ color: '#e9eaee', fontSize: 14, marginTop: 2 }}>between {selObjs[0].label} and {selObjs[1].label}</RNText>
           {config.compare(selObjs[0], selObjs[1]).map((line, i) => (
-            <RNText key={i} style={{ color: '#e9eaee', fontSize: 12, marginTop: 6 }}>{line}</RNText>
+            <RNText key={i} style={{ color: '#c9ccd2', fontSize: 13, lineHeight: 19, marginTop: 8 }}>{line}</RNText>
           ))}
-          <Pressable onPress={() => setSel([])} style={{ position: 'absolute', top: 8, right: 10 }}>
-            <RNText style={{ color: '#9aa1ac' }}>clear</RNText>
-          </Pressable>
         </View>
       )}
 
