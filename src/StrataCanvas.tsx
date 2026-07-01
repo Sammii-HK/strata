@@ -20,7 +20,7 @@ const fontStyle = { fontFamily: Platform.select({ ios: 'Helvetica', default: 'sa
 const fontBoldStyle = { fontFamily: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }) as string, fontSize: 12, fontWeight: '600' as const }
 
 export default function StrataCanvas() {
-  const { config, lens, setLens } = useContext(MapContext)
+  const { config, lens, setLens, openAtlas } = useContext(MapContext)
   const { width: W, height: H } = useWindowDimensions()
   // matchFont uses the platform system font provider; not implemented on RN Web,
   // so guard it (web skips text via the `font &&` checks; native gets real fonts).
@@ -376,6 +376,11 @@ export default function StrataCanvas() {
               <RNText style={{ color: '#e8b84b' }}>{l === lens ? '✓' : ''}</RNText>
             </Pressable>
           ))}
+          <View style={{ height: 1, backgroundColor: '#2a2f39', marginVertical: 4 }} />
+          <Pressable style={item} onPress={() => { setMapMenuOpen(false); openAtlas() }}>
+            <RNText style={{ color: '#e9eaee', fontSize: 14 }}>Browse all maps</RNText>
+            <RNText style={{ color: '#9aa1ac' }}>›</RNText>
+          </Pressable>
         </View>
       )}
 

@@ -3,6 +3,7 @@ import { Platform, Pressable, Text as RNText, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import Onboarding from './src/Onboarding';
+import Atlas from './src/Atlas';
 import { MapContext, type Lens } from './src/mapContext';
 import { cosmosConfig } from './src/maps/cosmos';
 
@@ -28,9 +29,11 @@ function LensView({ lens }: { lens: Lens }) {
 export default function App() {
   const [lens, setLens] = useState<Lens>('cosmos');
   const [showIntro, setShowIntro] = useState(!seenIntro);
+  const [showAtlas, setShowAtlas] = useState(false);
   const config = lens === 'cosmos' ? cosmosConfig : null;
+  const openAtlas = () => setShowAtlas(true);
   return (
-    <MapContext.Provider value={{ config, lens, setLens }}>
+    <MapContext.Provider value={{ config, lens, setLens, openAtlas }}>
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#101218' }}>
         <StatusBar style="light" />
         <LensView lens={lens} />
@@ -41,6 +44,7 @@ export default function App() {
               top: 54,
               alignSelf: 'center',
               flexDirection: 'row',
+              alignItems: 'center',
               backgroundColor: '#1a1e26',
               borderRadius: 10,
               borderWidth: 1,
@@ -58,8 +62,12 @@ export default function App() {
                 <RNText style={{ color: lens === l ? '#e9eaee' : '#9aa1ac', fontSize: 14, textTransform: 'capitalize' }}>{l}</RNText>
               </Pressable>
             ))}
+            <Pressable onPress={openAtlas} style={{ paddingVertical: 6, paddingHorizontal: 14, borderLeftWidth: 1, borderLeftColor: '#2a2f39' }}>
+              <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>Maps ›</RNText>
+            </Pressable>
           </View>
         )}
+        {showAtlas && <Atlas onOpen={(l) => { setLens(l); setShowAtlas(false); }} onClose={() => setShowAtlas(false)} />}
         {showIntro && <Onboarding lens={lens} onDone={() => { seenIntro = true; setShowIntro(false); }} />}
       </GestureHandlerRootView>
     </MapContext.Provider>
