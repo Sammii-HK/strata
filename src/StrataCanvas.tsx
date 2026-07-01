@@ -54,6 +54,7 @@ export default function StrataCanvas() {
   const LANE_MAP = useMemo(() => Object.fromEntries((config?.lanes ?? []).map((l) => [l.id, l])), [config])
   const byId = useMemo(() => new Map((config?.items ?? []).map((o) => [o.id, o])), [config])
   const [loP, hiP] = useMemo(() => {
+    if (config?.axis.domain) return config.axis.domain
     let lo = Infinity
     let hi = -Infinity
     for (const o of config?.items ?? []) {
@@ -255,7 +256,7 @@ export default function StrataCanvas() {
   const showLbl = (i: number) => (i === 1 ? true : i === 2 ? k >= 1.1 : i === 3 ? k >= 1.9 : k >= 3.5)
 
   const visible = ITEMS.filter((o) => showImp(o.importance) && !hidden.has(o.lane))
-    .map((o) => ({ o, x: sx(o.pos), y: objY(o), c: LANE_MAP[o.lane].color }))
+    .map((o) => ({ o, x: sx(clamp(o.pos, loP, hiP)), y: objY(o), c: LANE_MAP[o.lane].color }))
     .filter((p) => p.x > -50 && p.x < W + 50)
     .sort((a, b) => b.o.importance - a.o.importance)
   visibleRef.current = visible.map((p) => ({ id: p.o.id, x: p.x, y: p.y, r: p.o.importance === 1 ? 6.5 : p.o.importance === 2 ? 4.6 : p.o.importance === 3 ? 3.3 : 2.5 }))

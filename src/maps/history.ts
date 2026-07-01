@@ -52,7 +52,7 @@ export const historyConfig: StrataConfig = {
   scale: 'linear',
   // Open framed on the classical-to-modern window (the densest, most relatable
   // stretch); pinch out for deep antiquity.
-  axis: { kind: 'time', format: fmtYear, ticks: [-3000, -2000, -1000, -500, 0, 500, 1000, 1500, 1800, 1900, 1950, 2000], frame: [-800, 2030] },
+  axis: { kind: 'time', format: fmtYear, ticks: [-10000, -5000, -3000, -2000, -1000, -500, 0, 500, 1000, 1500, 1800, 1900, 1950, 2000], frame: [-800, 2030], domain: [-11000, 2030] },
   lanes: LANES,
   // No sub-lane fan for now: regions are stacked lanes over the same time range,
   // so the cosmos-style position-aware fan doesn't apply. Countries live in the

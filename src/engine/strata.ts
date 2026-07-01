@@ -46,6 +46,10 @@ export interface StrataConfig {
     ticks: number[]
     /** Default framed window [from, to]; omit to fit all. */
     frame?: [number, number]
+    /** Fixed scale domain [min, max]; overrides the data extent so a single
+     * outlier (e.g. a 400,000 BC event) can't stretch the axis. Items outside
+     * it clamp to the edge. Omit to use the data's min/max. */
+    domain?: [number, number]
   }
   lanes: Lane[]
   /** Lane ids whose items fan into sub-lanes on deep zoom (e.g. region -> countries, constellation -> stars). v1 fans the first. */
