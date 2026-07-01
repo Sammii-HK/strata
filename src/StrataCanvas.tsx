@@ -44,6 +44,9 @@ export default function StrataCanvas() {
   const [mapMenuOpen, setMapMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
+  // Scrubber drill-in: a nav stack of item ids. sheetIdx = -1 shows the chips.
+  const [sheetHist, setSheetHist] = useState<string[]>([])
+  const [sheetIdx, setSheetIdx] = useState(-1)
 
   const visibleRef = useRef<{ id: string; x: number; y: number; r: number }[]>([])
 
@@ -77,8 +80,8 @@ export default function StrataCanvas() {
     const hiA = axL(hiv)
     const uu = (v: number) => (axL(v) - loA) / (hiA - loA)
     const span = Math.max(1e-6, uu(f[1]) - uu(f[0]))
-    const nk = Math.max(0.85, Math.min(60, 1 / span))
-    const tx = Math.max(120 - W * nk, Math.min(W - 120, -uu(f[0]) * W * nk))
+    const nk = Math.max(1, Math.min(60, 1 / span))
+    const tx = Math.max(W - W * nk, Math.min(0, -uu(f[0]) * W * nk))
     setView({ k: nk, tx })
   }, [config, W])
 
@@ -91,6 +94,8 @@ export default function StrataCanvas() {
     setMenuOpen(false)
     setMapMenuOpen(false)
     setSearchOpen(false)
+    setSheetHist([])
+    setSheetIdx(-1)
     setQuery('')
   }, [config?.id])
 
@@ -106,7 +111,9 @@ export default function StrataCanvas() {
   const lo = ax(loP)
   const hi = ax(hiP)
 
-  const clampTx = (tx: number, k: number, w: number) => clamp(tx, 120 - w * k, w - 120)
+  // Pin the data edges to the screen edges: the content always fills the width,
+  // you can't pan or zoom out into empty space past the ends.
+  const clampTx = (tx: number, k: number, w: number) => clamp(tx, w - w * k, 0)
   const unit = (v: number) => (ax(v) - lo) / (hi - lo)
   const sx = (v: number) => unit(v) * W * view.k + view.tx
   const posAtPx = (px: number) => inv(lo + ((px - viewRef.current.tx) / (W * viewRef.current.k)) * (hi - lo))
@@ -156,7 +163,7 @@ export default function StrataCanvas() {
 
   const zoomBy = (f: number) =>
     setView((v) => {
-      const nk = clamp(v.k * f, 0.85, 300)
+      const nk = clamp(v.k * f, 1, 300)
       return { k: nk, tx: clampTx(W / 2 - (W / 2 - v.tx) * (nk / v.k), nk, W) }
     })
 
@@ -178,7 +185,7 @@ export default function StrataCanvas() {
       const f = e.scale / lastScale.current
       lastScale.current = e.scale
       setView((v) => {
-        const nk = clamp(v.k * f, 0.85, 300)
+        const nk = clamp(v.k * f, 1, 300)
         return { k: nk, tx: clampTx(e.focalX - (e.focalX - v.tx) * (nk / v.k), nk, W) }
       })
     })
@@ -539,8 +546,8 @@ export default function StrataCanvas() {
         </View>
       )}
 
-      {/* ---- glass cross-section scrubber ---- */}
-      {shellOn && (
+      {/* ---- glass cross-section scrubber (chip list) ---- */}
+      {shellOn && sheetIdx < 0 && (
         <BlurView intensity={36} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 13, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' }}>
           <View style={{ padding: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -553,16 +560,55 @@ export default function StrataCanvas() {
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
               {shellState.filter(({ cat }) => !hidden.has(cat.id)).map(({ cat, o }) => (
-                <View key={cat.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 8, paddingVertical: 5, paddingHorizontal: 9 }}>
+                <Pressable
+                  key={cat.id}
+                  disabled={!o}
+                  onPress={() => { if (o) { setSheetHist((h) => [...h, o.id]); setSheetIdx(sheetHist.length) } }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 9 }}
+                >
                   <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: cat.color }} />
                   <RNText style={{ color: o ? '#e9eaee' : '#5b626c', fontSize: 12 }}>{o ? o.label : '—'}</RNText>
-                </View>
+                </Pressable>
               ))}
             </View>
-            <RNText style={{ color: '#6a7280', fontSize: 11, marginTop: 10 }}>drag across the map to sweep</RNText>
+            <RNText style={{ color: '#6a7280', fontSize: 11, marginTop: 10 }}>drag to sweep · tap one to open it</RNText>
           </View>
         </BlurView>
       )}
+
+      {/* ---- scrubber drill-in detail sheet (with back / forward / close all) ---- */}
+      {shellOn && sheetIdx >= 0 && (() => {
+        const cur = byId.get(sheetHist[sheetIdx])
+        if (!cur) return null
+        return (
+          <BlurView intensity={40} tint="dark" style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 14, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' }}>
+            <View style={{ padding: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
+                  <Pressable onPress={() => setSheetIdx(sheetIdx - 1)} hitSlop={8}>
+                    <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>‹ Back</RNText>
+                  </Pressable>
+                  {sheetIdx < sheetHist.length - 1 && (
+                    <Pressable onPress={() => setSheetIdx(sheetIdx + 1)} hitSlop={8}>
+                      <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>Forward ›</RNText>
+                    </Pressable>
+                  )}
+                </View>
+                <Pressable onPress={() => { setShellOn(false); setSheetHist([]); setSheetIdx(-1) }} hitSlop={8}>
+                  <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>Close all ✕</RNText>
+                </Pressable>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: LANE_MAP[cur.lane]?.color ?? '#e8b84b' }} />
+                <RNText style={{ color: '#9aa1ac', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>{laneNameOf(cur.lane)}{cur.sub ? ` · ${cur.sub}` : ''}</RNText>
+              </View>
+              <RNText style={{ color: '#e9eaee', fontSize: 22, fontWeight: '700' }}>{cur.label}</RNText>
+              <RNText style={{ color: '#e8b84b', fontSize: 14, marginTop: 2 }}>{fmt(cur.pos)}{config.originLabel ?? ''}</RNText>
+              {cur.note ? <RNText style={{ color: '#c9ccd2', fontSize: 13, lineHeight: 19, marginTop: 8 }}>{cur.note}</RNText> : null}
+            </View>
+          </BlurView>
+        )
+      })()}
     </View>
   )
 }
