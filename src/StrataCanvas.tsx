@@ -38,7 +38,7 @@ export default function StrataCanvas() {
   const font = useMemo(() => { try { return matchFont(fontStyle) } catch { return null } }, [])
   const fontBold = useMemo(() => { try { return matchFont(fontBoldStyle) } catch { return null } }, [])
 
-  const [view, setView] = useState({ k: 1, tx: 0 })
+  const [view, setView] = useState({ k: 1, tx: 0, ty: 0 })
   const viewRef = useRef(view)
   viewRef.current = view
   const lastScale = useRef(1)
@@ -91,7 +91,7 @@ export default function StrataCanvas() {
     const span = Math.max(1e-6, uu(f[1]) - uu(f[0]))
     const nk = Math.max(1, Math.min(60, 1 / span))
     const tx = Math.max(W - W * nk, Math.min(0, -uu(f[0]) * W * nk))
-    setView({ k: nk, tx })
+    setView({ k: nk, tx, ty: 0 })
   }, [config, W])
 
   // Reset transient state when switching maps.
@@ -171,21 +171,28 @@ export default function StrataCanvas() {
   })()
   const subIndex = new Map(subNames.map((c, i) => [c, i]))
 
+  // Vertical pan bound (how far you can drag down); set during layout below.
+  const tyMinRef = useRef(0)
+
   const zoomBy = (f: number) =>
     setView((v) => {
       const nk = clamp(v.k * f, 1, 300)
-      return { k: nk, tx: clampTx(W / 2 - (W / 2 - v.tx) * (nk / v.k), nk, W) }
+      return { k: nk, tx: clampTx(W / 2 - (W / 2 - v.tx) * (nk / v.k), nk, W), ty: v.ty }
     })
 
   const pan = Gesture.Pan()
     .runOnJS(true)
     .onChange((e) => {
-      setView((v) => ({ k: v.k, tx: clampTx(v.tx + e.changeX, v.k, W) }))
+      setView((v) => ({
+        k: v.k,
+        tx: clampTx(v.tx + e.changeX, v.k, W),
+        ty: clamp(v.ty + e.changeY, tyMinRef.current, 0),
+      }))
     })
   // The scrubber track is a navigator: drag/tap along it to pan the whole view
   // to that point on the axis (centre the view on the tapped x), so you can jump
   // end-to-end in one move instead of dragging many times.
-  const jumpTo = (x: number) => setView((v) => ({ k: v.k, tx: clampTx(W / 2 - x * v.k, v.k, W) }))
+  const jumpTo = (x: number) => setView((v) => ({ k: v.k, tx: clampTx(W / 2 - x * v.k, v.k, W), ty: v.ty }))
   const scrub = Gesture.Pan().runOnJS(true).onChange((e) => jumpTo(e.x))
   const scrubTap = Gesture.Tap().runOnJS(true).onEnd((e) => jumpTo(e.x))
   const pinch = Gesture.Pinch()
@@ -198,7 +205,7 @@ export default function StrataCanvas() {
       lastScale.current = e.scale
       setView((v) => {
         const nk = clamp(v.k * f, 1, 300)
-        return { k: nk, tx: clampTx(e.focalX - (e.focalX - v.tx) * (nk / v.k), nk, W) }
+        return { k: nk, tx: clampTx(e.focalX - (e.focalX - v.tx) * (nk / v.k), nk, W), ty: v.ty }
       })
     })
   const tap = Gesture.Tap()
@@ -241,24 +248,33 @@ export default function StrataCanvas() {
   const sp = fanVis >= 0 ? smooth(clamp((k - 3) / 3, 0, 1)) : 0
   const zFrac = fanVis >= 0 ? lerp(1 / nVis, 0.82, sp) : 1 / nVis
   const otherFrac = nVis > 1 ? (1 - zFrac) / (nVis - 1) : 1
+  // The fan band gets a minimum height per sub-lane, so many sub-lanes (e.g. all
+  // constellations) can exceed the screen; drag vertically to reach the rest.
+  const MIN_SUB_H = 26
   const bands: { top: number; h: number }[] = []
+  let contentH = 0
   {
     let acc = TOP
     for (let vp = 0; vp < nVis; vp++) {
-      const bh = usableH * (vp === fanVis ? zFrac : otherFrac)
+      let bh = usableH * (vp === fanVis ? zFrac : otherFrac)
+      if (vp === fanVis && sp > 0.02) bh = Math.max(bh, mSub * MIN_SUB_H * sp)
       bands.push({ top: acc, h: bh })
       acc += bh
     }
+    contentH = acc - TOP
   }
+  const tyMin = Math.min(0, usableH - contentH)
+  tyMinRef.current = tyMin
+  const ty = clamp(view.ty, tyMin, 0)
   const laneCenterY = (laneId: string) => {
     const vp = visPos.get(laneId)
     if (vp == null) return -1000
-    return bands[vp].top + bands[vp].h / 2
+    return bands[vp].top + bands[vp].h / 2 + ty
   }
   const subY = (si: number) => {
     const b = bands[fanVis >= 0 ? fanVis : 0]
     const pad = b.h * 0.05
-    return b.top + pad + ((b.h - 2 * pad) * (si + 0.5)) / mSub
+    return b.top + pad + ((b.h - 2 * pad) * (si + 0.5)) / mSub + ty
   }
   const objY = (o: StrataItem) => {
     if (fanLaneId && o.lane === fanLaneId && sp > 0.02 && o.sub) {
@@ -354,7 +370,7 @@ export default function StrataCanvas() {
     const hit = ITEMS.find((o) => o.label.toLowerCase().includes(q))
     if (!hit) return
     const nk = Math.max(viewRef.current.k, 8)
-    setView({ k: nk, tx: clampTx(W / 2 - unit(hit.pos) * W * nk, nk, W) })
+    setView({ k: nk, tx: clampTx(W / 2 - unit(hit.pos) * W * nk, nk, W), ty: 0 })
     setSel([hit.id])
   }
 
