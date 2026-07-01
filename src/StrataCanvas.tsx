@@ -82,6 +82,18 @@ export default function StrataCanvas() {
     setView({ k: nk, tx })
   }, [config, W])
 
+  // Reset transient state when switching maps.
+  useEffect(() => {
+    setSel([])
+    setShellOn(false)
+    setHidden(new Set())
+    setAllSubs(false)
+    setMenuOpen(false)
+    setMapMenuOpen(false)
+    setSearchOpen(false)
+    setQuery('')
+  }, [config?.id])
+
   if (!config) return <View style={{ flex: 1, backgroundColor: BG }} />
 
   const ITEMS = config.items
@@ -366,8 +378,10 @@ export default function StrataCanvas() {
             const imp = p.o.importance
             const r = imp === 1 ? 6.5 : imp === 2 ? 4.6 : imp === 3 ? 3.3 : 2.5
             const isSel = sel.includes(p.o.id)
+            const x2 = p.o.end != null ? clamp(sx(p.o.end), -20, W + 20) : null
             return (
               <Group key={p.o.id}>
+                {x2 != null && <Line p1={vec(p.x, p.y)} p2={vec(x2, p.y)} color={p.c} strokeWidth={Math.max(3, r)} strokeCap="round" opacity={0.4} />}
                 {isSel && <Circle cx={p.x} cy={p.y} r={r + 4} color="#e9eaee" style="stroke" strokeWidth={1.5} />}
                 <Circle cx={p.x} cy={p.y} r={r} color={imp === 1 ? BG : p.c} style={imp === 1 ? 'stroke' : 'fill'} strokeWidth={imp === 1 ? 3 : undefined} />
               </Group>
