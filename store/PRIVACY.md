@@ -2,7 +2,7 @@
 
 _Last updated: 1 July 2026_
 
-Chronoline does not collect, store, or transmit any personal data.
+Strata does not collect, store, or transmit any personal data.
 
 - The app has no accounts and no login.
 - It does not use analytics, advertising, or third-party tracking.

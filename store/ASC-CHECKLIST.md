@@ -3,13 +3,13 @@
 Legend: ✅ done in code by Claude · 🔑 needs your Apple/RevenueCat login · 🎨 your asset
 
 ## v1 = paid app, NO in-app purchases yet
-Ship Chronoline as a plain £9.99 paid app (Cosmos + History). Packs + Complete
+Ship Strata as a plain £9.99 paid app (Cosmos + History). Packs + Complete
 come as a later update once IAP is wired. This keeps v1 fast and review-clean.
 
 ### App config
 - ✅ `app.json`: bundle `com.sammii.chronoline`, version 1.0.0, build 1, dark UI, portrait, iPhone-only (`supportsTablet: false` so no iPad screenshots needed), `usesNonExemptEncryption: false` (skips the export-compliance prompt each build).
 - 🎨 **App icon** (you): drop a 1024×1024 PNG (no alpha, no rounded corners) at `assets/icon.png`. Android adaptive icons already referenced.
-- 🔑 **App name** (you): decide final name (see ASC-LISTING.md shortlist); set in ASC and, if you want the home-screen label to match, in `app.json` "name".
+- ✅ **App name**: **Strata** (set in `app.json` + throughout the app). Just enter it in ASC when you create the listing.
 
 ### Store listing (copy ready in ASC-LISTING.md)
 - ✅ Description, subtitle, promo text, keywords, category, age rating drafted.
@@ -41,7 +41,7 @@ Create these as **Non-Consumable** in-app purchases (NOT auto-renewing):
 | `com.sammii.chronoline.evolution` | Evolution pack | £4.99 | **OFF** |
 | `com.sammii.chronoline.oceans` | Oceans pack | £4.99 | **OFF** |
 | `com.sammii.chronoline.deeptime` | Deep Time pack | £4.99 | **OFF** |
-| `com.sammii.chronoline.complete` | Chronoline Complete | £19.99 | **OFF** |
+| `com.sammii.chronoline.complete` | Strata Complete | £19.99 | **OFF** |
 
 - ⚠️ For EACH product, in its ASC page, ensure **"Family Sharing" is turned OFF**
   (Apple defaults non-consumables to shareable-eligible; you must disable it).

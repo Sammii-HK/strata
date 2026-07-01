@@ -2,22 +2,10 @@
 
 UK English, sentence case, no em dashes. Paste into App Store Connect.
 
-## App name (needs your final call, max 30 chars)
+## App name
 
-Current working title is **Chronoline**, but it reads as time-only, and the app
-is now multi-domain (distance, depth, time). Shortlist that fits "one scale,
-many worlds":
-
-| Name | Chars | Why |
-|------|-------|-----|
-| **Chronoline** | 10 | Known, but time-leaning |
-| **To Scale** | 8 | Says exactly what it does; clean; great subtitle pairing |
-| **Strata** | 6 | Layers/lines across any subject; short, brandable |
-| **Orders of Magnitude** | 19 | The literal idea; a touch long |
-| **Vast** | 4 | Punchy, evocative, ownable |
-| **Span** | 4 | Short, neutral across time/distance/depth |
-
-Recommendation: **To Scale** (or keep **Chronoline** if you're attached to the brand). Decide, then set it here and in `app.json` "name" if you want the home-screen label to match.
+**Strata** (locked). Set in `app.json` "name" and across the app. The bundle id
+stays `com.sammii.chronoline` (internal only, never shown to users).
 
 ## Subtitle (max 30 chars)
 - `Zoom the whole universe` (Cosmos-led)
@@ -30,7 +18,7 @@ Zoom one map from the space station overhead out to the edge of the universe, th
 ## Description
 One engine, many worlds.
 
-Chronoline is a single, living map you can zoom. Start at the whole picture, then zoom in and every line opens into many. Everything sits at its true scale, so the distances and the gaps are real, not decorative.
+Strata is a single, living map you can zoom. Start at the whole picture, then zoom in and every line opens into many. Everything sits at its true scale, so the distances and the gaps are real, not decorative.
 
 Two maps are included:
 
