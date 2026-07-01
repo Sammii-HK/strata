@@ -13,10 +13,39 @@
 #   fastlane ios upload    -> upload a built .ipa (set IPA_PATH), no submit
 #   fastlane ios submit    -> submit the current build for review (PUBLISHES; run only on approval)
 
+require "json"
+
 ASC_KEY_JSON = File.expand_path(ENV["ASC_KEY_JSON"] || "~/.appstoreconnect/fastlane_api_key.json")
 APP_ID = "com.sammii.chronoline"
 
 platform :ios do
+  # Authenticate every lane with the ASC API key (produce also reads it from here).
+  # The key JSON stores the .p8 PEM inline under "key", so pass it as key_content.
+  before_all do
+    creds = JSON.parse(File.read(ASC_KEY_JSON))
+    app_store_connect_api_key(
+      key_id: creds["key_id"],
+      issuer_id: creds["issuer_id"],
+      key_content: creds["key"],
+      is_key_content_base64: false,
+      duration: 1200,
+      in_house: false
+    )
+  end
+
+  desc "Create the App Store Connect app record for Strata (draft only, no submit)"
+  lane :create_asc_app do
+    produce(
+      app_identifier: APP_ID,
+      app_name: "Strata",
+      language: "en-GB",
+      sku: "strata-ios",
+      app_version: "1.0.0",
+      skip_itc: false,
+      skip_devcenter: false
+    )
+  end
+
   desc "Push listing metadata + screenshots (no build, no submit)"
   lane :metadata do
     deliver(
