@@ -2,9 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, useWindowDimensions } from 'react-native'
 import { Canvas, Fill, Group, Line, Circle, Text, matchFont, vec } from '@shopify/react-native-skia'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { EVENTS } from './data/events'
+import { EVENTS as EVENTS_CORE } from './data/events'
+import { PACK as HIST_EU } from './data/pack_history_europe'
+import { PACK as HIST_WORLD } from './data/pack_history_world'
+import { PACK as HIST_IDEAS } from './data/pack_history_ideas'
 import { THREADS, THREAD_MAP } from './data/threads'
 import { clamp, fmtYear, niceStep, showImp, showLbl, toUnit } from './engine/scale'
+
+const EVENTS = [...EVENTS_CORE, ...HIST_EU, ...HIST_WORLD, ...HIST_IDEAS]
 
 const TOP = 64
 const BOTTOM = 40
