@@ -490,15 +490,20 @@ export default function StrataCanvas() {
 
       {/* ---- readout ---- */}
       {!shellOn && selObjs.length === 1 && (
-        <View style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 10, padding: 12 }}>
-          <RNText style={{ color: '#e9eaee', fontSize: 13 }}>
-            <RNText style={{ color: '#e8b84b', fontWeight: '600' }}>{selObjs[0].label}</RNText> · {fmt(selObjs[0].pos)}{config.originLabel ?? ''} · {laneNameOf(selObjs[0].lane)}{selObjs[0].sub ? ` · ${selObjs[0].sub}` : ''}
-          </RNText>
-          {selObjs[0].note ? <RNText style={{ color: '#9aa1ac', fontSize: 12, marginTop: 6 }}>{selObjs[0].note}</RNText> : null}
-          <Pressable onPress={() => setSel([])} style={{ position: 'absolute', top: 8, right: 10 }}>
-            <RNText style={{ color: '#9aa1ac' }}>clear</RNText>
-          </Pressable>
-          <RNText style={{ color: '#6a7280', fontSize: 11, marginTop: 6 }}>tap another to compare</RNText>
+        <View style={{ position: 'absolute', left: 12, right: 12, bottom: 16, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+              <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: LANE_MAP[selObjs[0].lane]?.color ?? '#e8b84b' }} />
+              <RNText style={{ color: '#9aa1ac', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>{laneNameOf(selObjs[0].lane)}{selObjs[0].sub ? ` · ${selObjs[0].sub}` : ''}</RNText>
+            </View>
+            <Pressable onPress={() => setSel([])} hitSlop={12}>
+              <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>clear</RNText>
+            </Pressable>
+          </View>
+          <RNText style={{ color: '#e9eaee', fontSize: 22, fontWeight: '700' }}>{selObjs[0].label}</RNText>
+          <RNText style={{ color: '#e8b84b', fontSize: 14, marginTop: 2 }}>{fmt(selObjs[0].pos)}{config.originLabel ?? ''}</RNText>
+          {selObjs[0].note ? <RNText style={{ color: '#c9ccd2', fontSize: 13, lineHeight: 19, marginTop: 8 }}>{selObjs[0].note}</RNText> : null}
+          <RNText style={{ color: '#6a7280', fontSize: 12, marginTop: 10 }}>Tap another to compare</RNText>
         </View>
       )}
 
