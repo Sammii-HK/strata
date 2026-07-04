@@ -27,7 +27,7 @@ export const FACTS: Fact[] = [
   // ---- History: place ----
   { kind: 'place', map: 'History', headline: 'The Great Pyramid was built around 2560 BC', detail: 'It stood for over 3,800 years as the tallest structure humans had ever made.' },
   { kind: 'place', map: 'History', headline: 'Gutenberg printed his Bible around 1455', detail: 'Within 50 years, printed books outnumbered every manuscript copied in the previous thousand.' },
-  { kind: 'place', map: 'History', headline: 'The first Moon landing was 1969', detail: 'Closer in time to the first powered flight (1903) than to today.' },
+  { kind: 'place', map: 'History', headline: 'The first Moon landing was 1969', detail: 'Only 66 years after the Wright brothers first left the ground at Kitty Hawk in 1903.' },
   { kind: 'place', map: 'History', headline: 'Penicillin was discovered in 1928', detail: 'A stray mould on a forgotten dish, and suddenly infections stopped being a death sentence.' },
   { kind: 'place', map: 'History', headline: 'Darwin published On the Origin of Species in 1859', detail: 'The same decade the germ theory of disease took hold, a turning point for how we see life.' },
 

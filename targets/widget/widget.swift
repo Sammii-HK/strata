@@ -20,7 +20,7 @@ enum FactStore {
     Fact(map: "Cosmos", headline: "You always see the Sun 8 minutes in the past", detail: "That is how long its light takes to reach us. It is never quite where it looks."),
     Fact(map: "History", headline: "The Great Pyramid was built around 2560 BC", detail: "It stood for over 3,800 years as the tallest structure humans had ever made."),
     Fact(map: "History", headline: "Gutenberg printed his Bible around 1455", detail: "Within 50 years, printed books outnumbered every manuscript copied in the previous thousand."),
-    Fact(map: "History", headline: "The Moon landing was closer to the Wright brothers than to today", detail: "1903 to 1969 to now: powered flight to the Moon in a single lifetime."),
+    Fact(map: "History", headline: "The Moon landing came only 66 years after the Wright brothers", detail: "1903 to 1969: powered flight to the Moon in a single lifetime."),
     Fact(map: "History", headline: "Penicillin was discovered by accident in 1928", detail: "A stray mould on a forgotten dish, and infections stopped being a death sentence."),
     Fact(map: "History", headline: "Cleopatra lived closer to the Moon landing than to the Pyramids", detail: "The Great Pyramid was already 2,500 years old in her lifetime."),
     Fact(map: "History", headline: "The T. rex is closer to us than to the Stegosaurus", detail: "More time separates those two dinosaurs than separates T. rex from you."),
