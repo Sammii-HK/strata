@@ -72,6 +72,7 @@ const mapFilter = args.find((a) => a.startsWith('--map='))?.split('=')[1] as
 const minRatio = Number(args.find((a) => a.startsWith('--min-ratio='))?.split('=')[1] ?? '2')
 const limit = Number(args.find((a) => a.startsWith('--limit='))?.split('=')[1] ?? '40')
 const markSeen = args.includes('--mark-seen')
+const jsonOut = args.includes('--json')
 const MAX_IMPORTANCE = 3 // constellation packs skew lower-importance than the main History packs; loosened so depth-illusion has enough to work with
 
 const MIN_GAP_BC = Number(args.find((a) => a.startsWith('--min-gap-bc='))?.split('=')[1] ?? '15')
@@ -222,6 +223,11 @@ function mineDepthIllusion(items: FlatItem[]): IllusionCandidate[] {
 
 const seen = loadSeen()
 let printed = 0
+// Structured rows for --json consumers (e.g. the fact-bank agent) — one
+// flat shape covering both modes, carrying only real verified numbers so a
+// downstream script generator never has to (or is tempted to) re-derive or
+// paraphrase the citation figures themselves.
+const jsonRows: Record<string, unknown>[] = []
 
 if (mode === 'gap') {
   const results: GapCandidate[] = []
@@ -236,37 +242,82 @@ if (mode === 'gap') {
     deduped.push(cand)
   }
 
-  console.log(
-    `[gap mode] Mined ${results.length} raw candidates, ${deduped.length} after dedup + seen-filter. Top ${Math.min(limit, deduped.length)}:\n`,
-  )
+  if (!jsonOut) {
+    console.log(
+      `[gap mode] Mined ${results.length} raw candidates, ${deduped.length} after dedup + seen-filter. Top ${Math.min(limit, deduped.length)}:\n`,
+    )
+  }
   for (const cand of deduped.slice(0, limit)) {
     const unit = cand.map === 'History' ? 'yr' : 'ly'
-    const fuzzyFlag = cand.a.fuzzy || cand.b.fuzzy ? ' [fuzzy date(s) - verify before shipping]' : ''
-    console.log(
-      `[${cand.map}] ratio ${cand.ratio.toFixed(1)}x — "${cand.b.title}" is closer to "${cand.c.title}" ` +
-        `(${cand.gapBC.toFixed(cand.map === 'Cosmos' ? 4 : 0)}${unit}) than to "${cand.a.title}" ` +
-        `(${cand.gapAB.toFixed(cand.map === 'Cosmos' ? 4 : 0)}${unit})${fuzzyFlag}`,
-    )
+    const fuzzy = Boolean(cand.a.fuzzy || cand.b.fuzzy)
+    if (jsonOut) {
+      jsonRows.push({
+        kind: 'gap',
+        map: cand.map,
+        key: cand.key,
+        ratio: Number(cand.ratio.toFixed(2)),
+        unit,
+        fuzzy,
+        near: { id: cand.b.id, title: cand.b.title, value: cand.b.value, sourcePack: cand.b.sourcePack },
+        anchor: { id: cand.c.id, title: cand.c.title, value: cand.c.value, sourcePack: cand.c.sourcePack },
+        far: { id: cand.a.id, title: cand.a.title, value: cand.a.value, sourcePack: cand.a.sourcePack },
+        gapNearToAnchor: Number(cand.gapBC.toFixed(4)),
+        gapFarToNear: Number(cand.gapAB.toFixed(4)),
+      })
+    } else {
+      const fuzzyFlag = fuzzy ? ' [fuzzy date(s) - verify before shipping]' : ''
+      console.log(
+        `[${cand.map}] ratio ${cand.ratio.toFixed(1)}x — "${cand.b.title}" is closer to "${cand.c.title}" ` +
+          `(${cand.gapBC.toFixed(cand.map === 'Cosmos' ? 4 : 0)}${unit}) than to "${cand.a.title}" ` +
+          `(${cand.gapAB.toFixed(cand.map === 'Cosmos' ? 4 : 0)}${unit})${fuzzyFlag}`,
+      )
+    }
     seen.add(cand.key)
     printed++
   }
 } else {
   const results = mineDepthIllusion(constellationItems).filter((c) => !seen.has(c.key))
-  console.log(`[depth-illusion mode] ${results.length} constellation candidates after seen-filter. Top ${Math.min(limit, results.length)}:\n`)
+  if (!jsonOut) {
+    console.log(`[depth-illusion mode] ${results.length} constellation candidates after seen-filter. Top ${Math.min(limit, results.length)}:\n`)
+  }
   for (const cand of results.slice(0, limit)) {
-    console.log(
-      `[${cand.group}] ratio ${cand.ratio.toFixed(1)}x — "${cand.near.title}" (${cand.near.value.toFixed(1)}ly) and ` +
-        `"${cand.far.title}" (${cand.far.value.toFixed(1)}ly) look like part of the same constellation but are ` +
-        `${(cand.far.value - cand.near.value).toFixed(1)}ly apart in reality`,
-    )
+    if (jsonOut) {
+      jsonRows.push({
+        kind: 'depth-illusion',
+        map: 'Cosmos',
+        key: cand.key,
+        ratio: Number(cand.ratio.toFixed(2)),
+        unit: 'ly',
+        fuzzy: false,
+        group: cand.group,
+        near: { id: cand.near.id, title: cand.near.title, value: cand.near.value },
+        far: { id: cand.far.id, title: cand.far.title, value: cand.far.value },
+        gapLy: Number((cand.far.value - cand.near.value).toFixed(2)),
+      })
+    } else {
+      console.log(
+        `[${cand.group}] ratio ${cand.ratio.toFixed(1)}x — "${cand.near.title}" (${cand.near.value.toFixed(1)}ly) and ` +
+          `"${cand.far.title}" (${cand.far.value.toFixed(1)}ly) look like part of the same constellation but are ` +
+          `${(cand.far.value - cand.near.value).toFixed(1)}ly apart in reality`,
+      )
+    }
     seen.add(cand.key)
     printed++
   }
 }
 
+if (jsonOut) {
+  // Only the data rows go to stdout as JSON — everything else (this
+  // script's own progress logging) goes to stderr so a subprocess caller
+  // gets clean, parseable stdout.
+  console.error(`[mine-surprising-facts] ${printed} row(s), mode=${mode}${mapFilter ? ` map=${mapFilter}` : ''}`)
+  process.stdout.write(JSON.stringify(jsonRows, null, 2) + '\n')
+} else if (!markSeen) {
+  console.log(`\n(${printed} candidates would be marked seen with --mark-seen once you're happy with them.)`)
+}
+
 if (markSeen) {
   saveSeen(seen)
-  console.log(`\nMarked ${printed} candidates as seen — future runs will skip them (${SEEN_PATH}).`)
-} else {
-  console.log(`\n(${printed} candidates would be marked seen with --mark-seen — not persisted this run.)`)
+  if (jsonOut) console.error(`Marked ${printed} candidates as seen (${SEEN_PATH}).`)
+  else console.log(`Marked ${printed} candidates as seen — future runs will skip them (${SEEN_PATH}).`)
 }
