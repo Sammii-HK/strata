@@ -409,16 +409,34 @@ def generation_prompt(fact: dict) -> str:
         "You write short spoken scripts for Strata, a history and cosmos scale app. "
         "Write ONE short-form vertical video script about this verified fact.\n\n"
         f"VERIFIED FACTS (do not alter these numbers, restate them exactly):\n{facts_block}\n\n"
+        "HOOK TECHNIQUE (the hook is the single most important line — most viewers "
+        "decide whether to keep watching within the first 2 words):\n"
+        "- State the surprising claim as a flat, confident assertion. No setup, no "
+        "'did you know', no question, no throat-clearing. Land straight on the twist.\n"
+        "- The hook must lead with the SURPRISING-CLOSE pair, never the expected-far "
+        "pair. 'X is closer to Y than to Z' beats 'X and Z are far apart' every time — "
+        "the second framing states the obvious and gives the viewer nothing to doubt.\n"
+        "- If the reader would nod along in agreement, it is not a hook. If the reader's "
+        "first reaction would be 'wait, that can't be right', it is.\n"
+        "- Prefer naming both things in the hook over an abstract tease ('two empires "
+        "you'd never expect' is weaker than naming them directly).\n"
+        "- Real examples of this exact technique working (do not reuse verbatim, this "
+        "is calibration for tone/shape only):\n"
+        "  * 'Confucius never met a Roman, but almost did.'\n"
+        "  * 'Cleopatra lived closer to the Moon landing than to the Pyramids.'\n"
+        "  * 'These two stars look like neighbours. One is 200x farther than the other.'\n\n"
         "HARD RULES:\n"
         "- Every number above MUST appear in your script, unchanged. Do not round "
         "differently, do not estimate, do not invent additional numbers.\n"
-        "- Format: a scroll-stopping hook line, then the reveal using the exact figures, "
-        "ending on the surprising contrast (never state it as if it were expected).\n"
+        "- Format: the hook (above technique), then the reveal using the exact figures, "
+        "ending on the gut-punch line that makes the contrast concrete (a direct "
+        "comparison, not a vague 'isn't that wild' close).\n"
         "- Spoken length 45 to 90 words (about 21-26s aloud).\n"
         "- UK English. No em dashes. No hashtags. No emoji. No CTA or link of any kind "
         "(that goes in the post caption/bio separately, never spoken or on-screen).\n\n"
         "Respond with ONLY this JSON object, nothing else:\n"
-        '{"hook": "<one line>", "spoken": "<the spoken script, hook NOT repeated>", '
+        '{"hook": "<one line, the surprising-close assertion>", '
+        '"spoken": "<the spoken script, hook NOT repeated>", '
         '"caption": "<one-line caption, no question mark needed>"}'
     )
 
@@ -519,15 +537,70 @@ def server_healthy() -> bool:
         return False
 
 
+def _zoom_point(item: dict) -> dict:
+    return {"id": item["id"], "title": item["title"], "value": item["value"]}
+
+
+def build_timeline_gap(fact: dict) -> dict:
+    """Builds the server's TimelineGapData shape directly from a mined
+    fact — both the legacy pre-formatted from/to (TimelineConnector
+    fallback) and the raw zoomFrom/zoomTo/zoomContext (TimelineZoomScroll,
+    the real pan+zoom-across-the-real-axis visual)."""
+    unit = fact.get("unit", "yr")
+    if fact["kind"] == "gap":
+        # near=from (surprising-close to anchor), anchor=to, far=the distant
+        # scale-reference revealed on the Act-4 zoom-out. gapNearToAnchor is
+        # the small surprising gap (from->to); gapFarToNear is the vast
+        # scale-reference gap (far->from) — the two brackets contrasted in
+        # Act 4. Context here is only the OTHER nearby events (not far),
+        # since far is drawn specially.
+        near, anchor, far = fact["near"], fact["anchor"], fact["far"]
+        far_id = far.get("id")
+        return {
+            "from": {"title": near["title"], "value": _format_value(near["value"], unit)},
+            "to": {"title": anchor["title"], "value": _format_value(anchor["value"], unit)},
+            "unit": unit,
+            "zoomFrom": _zoom_point(near),
+            "zoomTo": _zoom_point(anchor),
+            "zoomFar": _zoom_point(far),
+            "zoomContext": [
+                _zoom_point(c) for c in fact.get("context", []) if c.get("id") != far_id
+            ],
+            "gapNear": round(fact["gapNearToAnchor"]),
+            "gapFar": round(fact["gapFarToNear"]),
+        }
+    # depth-illusion: near/far are the two same-constellation stars; the
+    # "gap" is the light-year distance between them. No third scale-ref.
+    near, far = fact["near"], fact["far"]
+    return {
+        "from": {"title": near["title"], "value": _format_value(near["value"], "ly")},
+        "to": {"title": far["title"], "value": _format_value(far["value"], "ly")},
+        "unit": "ly",
+        "zoomFrom": _zoom_point(near),
+        "zoomTo": _zoom_point(far),
+        "zoomContext": [],
+        "gapNear": round(fact.get("gapLy", abs(far["value"] - near["value"]))),
+    }
+
+
+def _format_value(value: float, unit: str) -> str:
+    if unit == "yr":
+        return f"{abs(round(value)):,} BC" if value < 0 else f"{round(value):,} AD"
+    return f"{value:.1f} {unit}"
+
+
 def render_script(script: dict, fact: dict) -> str:
+    persona = fact.get("map") or fact.get("group") or ""
     payload = {"scripts": [{
-        "scriptText": f"{script['hook']}\n{script['spoken']}",
+        # scriptText is the SPOKEN narration only — the hook is a written
+        # card (below), never spoken/subtitled, so the two never repeat.
+        "scriptText": script["spoken"],
+        "hook": script["hook"],
         "facetTitle": slugify(fact_title(fact)),
-        "topic": f"strata {fact['kind']} {fact.get('map', fact.get('group', ''))}",
+        "topic": f"strata {fact['kind']} {persona}",
+        "persona": persona,
         "dateKey": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "replyPrompt": "",
-        "commentKeyword": "",
-        "onScreenCta": "",
+        "timelineGap": build_timeline_gap(fact),
     }]}
     proc = subprocess.run(
         ["curl", "-sS", "-X", "POST", f"{VIDEO_SERVER_URL}/api/strata-pipeline",

@@ -160,6 +160,10 @@ interface GapCandidate {
   gapBC: number
   ratio: number
   key: string
+  /** A handful of real, nearby events (by sorted position, excluding a/b/c)
+   * so a rendered timeline has genuine surrounding texture instead of two
+   * isolated dots on an empty line — matches the real app's populated feel. */
+  context: FlatItem[]
 }
 
 interface IllusionCandidate {
@@ -188,7 +192,19 @@ function mineGap(items: FlatItem[], mapName: string): GapCandidate[] {
         if (b.title === c.title || a.title === c.title) continue
         const ratio = gapAB / gapBC
         if (ratio >= minRatio) {
-          out.push({ kind: 'gap', map: mapName, a, b, c, gapAB, gapBC, ratio, key: `gap:${mapName}:${a.id}:${b.id}` })
+          // Nearby real events for timeline texture: a couple before `a`,
+          // a couple between `b` and `c`, a couple after `c` — skip the
+          // three featured points themselves.
+          const excludeIds = new Set([a.id, b.id, c.id])
+          const context = [
+            ...sorted.slice(Math.max(0, ai - 2), ai),
+            ...sorted.slice(bi + 1, ci).filter((x) => !excludeIds.has(x.id)),
+            ...sorted.slice(ci + 1, ci + 3),
+          ].filter((x) => !excludeIds.has(x.id))
+          out.push({
+            kind: 'gap', map: mapName, a, b, c, gapAB, gapBC, ratio,
+            key: `gap:${mapName}:${a.id}:${b.id}`, context,
+          })
         }
       }
     }
@@ -263,6 +279,7 @@ if (mode === 'gap') {
         far: { id: cand.a.id, title: cand.a.title, value: cand.a.value, sourcePack: cand.a.sourcePack },
         gapNearToAnchor: Number(cand.gapBC.toFixed(4)),
         gapFarToNear: Number(cand.gapAB.toFixed(4)),
+        context: cand.context.map((x) => ({ id: x.id, title: x.title, value: x.value })),
       })
     } else {
       const fuzzyFlag = fuzzy ? ' [fuzzy date(s) - verify before shipping]' : ''
