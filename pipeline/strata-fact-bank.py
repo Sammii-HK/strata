@@ -593,7 +593,10 @@ def _format_value(value: float, unit: str) -> str:
 
 
 def render_script(script: dict, fact: dict) -> str:
-    persona = fact.get("map") or fact.get("group") or ""
+    # persona drives the visual theme (background thread colour + accent).
+    # gap facts keyword-match the era/domain from the event titles; depth-
+    # illusion facts are always constellation stars, so pin them to "stars".
+    persona = "stars" if fact["kind"] == "depth-illusion" else (fact.get("map") or "")
     payload = {"scripts": [{
         # scriptText is the SPOKEN narration only — the hook is a written
         # card (below), never spoken/subtitled, so the two never repeat.
