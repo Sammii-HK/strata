@@ -548,26 +548,29 @@ def build_timeline_gap(fact: dict) -> dict:
     the real pan+zoom-across-the-real-axis visual)."""
     unit = fact.get("unit", "yr")
     if fact["kind"] == "gap":
-        # near=from (surprising-close to anchor), anchor=to, far=the distant
-        # scale-reference revealed on the Act-4 zoom-out. gapNearToAnchor is
-        # the small surprising gap (from->to); gapFarToNear is the vast
-        # scale-reference gap (far->from) — the two brackets contrasted in
-        # Act 4. Context here is only the OTHER nearby events (not far),
-        # since far is drawn specially.
-        near, anchor, far = fact["near"], fact["anchor"], fact["far"]
-        far_id = far.get("id")
+        # DEFAULT: two-point story. near=from, anchor=to; the surprise is
+        # simply that these two feel like different eras but are gapNearToAnchor
+        # apart. We show just the pair + that one gap bracket.
+        #
+        # The miner's `far` point exists only so gap-mode can compute *why*
+        # the closeness is surprising (the ratio) — it is NOT part of the
+        # narrative unless the fact is explicitly framed as "closer to X than
+        # to Y" (the three-point shape, e.g. Cleopatra/Pyramids/Moon). We do
+        # not drag the far scale-reference on screen by default, since a third
+        # character the hook never set up reads as random. A future
+        # scale-contrast mode can opt in by adding zoomFar + gapFar.
+        near, anchor = fact["near"], fact["anchor"]
+        far_id = (fact.get("far") or {}).get("id")
         return {
             "from": {"title": near["title"], "value": _format_value(near["value"], unit)},
             "to": {"title": anchor["title"], "value": _format_value(anchor["value"], unit)},
             "unit": unit,
             "zoomFrom": _zoom_point(near),
             "zoomTo": _zoom_point(anchor),
-            "zoomFar": _zoom_point(far),
             "zoomContext": [
                 _zoom_point(c) for c in fact.get("context", []) if c.get("id") != far_id
             ],
             "gapNear": round(fact["gapNearToAnchor"]),
-            "gapFar": round(fact["gapFarToNear"]),
         }
     # depth-illusion: near/far are the two same-constellation stars; the
     # "gap" is the light-year distance between them. No third scale-ref.
