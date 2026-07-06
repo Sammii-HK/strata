@@ -574,7 +574,11 @@ def build_timeline_gap(fact: dict) -> dict:
         }
     # depth-illusion: near/far are the two same-constellation stars; the
     # "gap" is the light-year distance between them. No third scale-ref.
+    # The constellation intro (stars drawn in their sky positions, the two
+    # featured ones highlighted) plays first; the distance axis then reveals
+    # the real gap — so startTime delays the axis until after the intro.
     near, far = fact["near"], fact["far"]
+    CONSTELLATION_INTRO_SECONDS = 8.0
     return {
         "from": {"title": near["title"], "value": _format_value(near["value"], "ly")},
         "to": {"title": far["title"], "value": _format_value(far["value"], "ly")},
@@ -583,6 +587,8 @@ def build_timeline_gap(fact: dict) -> dict:
         "zoomTo": _zoom_point(far),
         "zoomContext": [],
         "gapNear": round(fact.get("gapLy", abs(far["value"] - near["value"]))),
+        "constellation": fact.get("group"),
+        "startTime": CONSTELLATION_INTRO_SECONDS,
     }
 
 
