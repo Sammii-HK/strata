@@ -7,7 +7,23 @@ import Atlas from './src/Atlas';
 import { MapContext, type Lens } from './src/mapContext';
 import { cosmosConfig } from './src/maps/cosmos';
 import { historyConfig } from './src/maps/history';
+import { geodeConfig } from './src/maps/geode';
+import { blazonConfig } from './src/maps/blazon';
+import { balladryConfig } from './src/maps/balladry';
+import { bestiaryConfig } from './src/maps/bestiary';
+import { mythlineConfig } from './src/maps/mythline';
+import type { StrataConfig } from './src/engine/strata';
 import { configurePurchases } from './src/purchases';
+
+const CONFIGS: Record<Lens, StrataConfig> = {
+  cosmos: cosmosConfig,
+  history: historyConfig,
+  geode: geodeConfig,
+  blazon: blazonConfig,
+  balladry: balladryConfig,
+  bestiary: bestiaryConfig,
+  mythline: mythlineConfig,
+};
 
 let seenIntro = false;
 
@@ -33,7 +49,7 @@ export default function App() {
   const [showIntro, setShowIntro] = useState(!seenIntro);
   const [showAtlas, setShowAtlas] = useState(false);
   useEffect(() => { configurePurchases(); }, []);
-  const config = lens === 'cosmos' ? cosmosConfig : historyConfig;
+  const config = CONFIGS[lens];
   const openAtlas = () => setShowAtlas(true);
   return (
     <MapContext.Provider value={{ config, lens, setLens, openAtlas }}>
