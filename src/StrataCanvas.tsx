@@ -4,7 +4,13 @@ import { Canvas, Fill, Group, Line, Circle, Text, matchFont, vec } from '@shopif
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { BlurView } from 'expo-blur'
 import { MapContext } from './mapContext'
+import { CATALOG, type Lens } from './catalogue'
 import type { StrataItem } from './engine/strata'
+
+// Maps openable from the quick-switch: anything included/owned with a live lens.
+const SWITCHABLE_LENSES = CATALOG.filter(
+  (e) => (e.status === 'included' || e.status === 'owned') && e.lens,
+).map((e) => e.lens!) as Lens[]
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v))
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
@@ -512,7 +518,7 @@ export default function StrataCanvas() {
 
       {mapMenuOpen && (
         <View style={{ position: 'absolute', top: 82, left: 12, zIndex: 30, minWidth: 200, ...menuBox }}>
-          {(['cosmos', 'history'] as const).map((l) => (
+          {SWITCHABLE_LENSES.map((l) => (
             <Pressable key={l} style={item} onPress={() => { setLens(l); setMapMenuOpen(false) }}>
               <RNText style={{ color: '#e9eaee', fontSize: 14, textTransform: 'capitalize' }}>{l}</RNText>
               <RNText style={{ color: '#e8b84b' }}>{l === lens ? '✓' : ''}</RNText>

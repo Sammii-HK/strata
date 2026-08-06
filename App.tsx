@@ -7,6 +7,7 @@ import Atlas from './src/Atlas';
 import { MapContext, type Lens } from './src/mapContext';
 import { cosmosConfig } from './src/maps/cosmos';
 import { historyConfig } from './src/maps/history';
+import { evolutionConfig } from './src/maps/evolution';
 import { configurePurchases } from './src/purchases';
 
 let seenIntro = false;
@@ -33,7 +34,7 @@ export default function App() {
   const [showIntro, setShowIntro] = useState(!seenIntro);
   const [showAtlas, setShowAtlas] = useState(false);
   useEffect(() => { configurePurchases(); }, []);
-  const config = lens === 'cosmos' ? cosmosConfig : historyConfig;
+  const config = lens === 'cosmos' ? cosmosConfig : lens === 'evolution' ? evolutionConfig : historyConfig;
   const openAtlas = () => setShowAtlas(true);
   return (
     <MapContext.Provider value={{ config, lens, setLens, openAtlas }}>
