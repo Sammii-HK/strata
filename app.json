@@ -12,7 +12,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "app.lunary.strata",
       "appleTeamId": "ASG43SHM5N",
-      "buildNumber": "1",
+      "buildNumber": "3",
       "config": {
         "usesNonExemptEncryption": false
       }
