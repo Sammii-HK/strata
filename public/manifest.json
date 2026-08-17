@@ -1,0 +1,15 @@
+{
+  "name": "Strata",
+  "short_name": "Strata",
+  "description": "One engine, many worlds. Zoom a single scale from the ISS overhead to the edge of the universe, or across all of recorded history, everything to true scale.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#101218",
+  "theme_color": "#101218",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
