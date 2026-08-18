@@ -180,6 +180,24 @@ export default function StrataCanvas() {
       return { k: nk, tx: clampTx(W / 2 - (W / 2 - v.tx) * (nk / v.k), nk, W), ty: v.ty }
     })
 
+  // Web only: trackpad pinch and mouse-wheel scroll both arrive as wheel events
+  // (trackpad pinch sets ctrlKey), so this is what "pinch or scroll to zoom"
+  // actually means on desktop web -- react-native-gesture-handler's Pinch
+  // gesture has no equivalent for either. Zoom centres on the cursor, same math
+  // as the native pinch handler below.
+  const onWheel = (e: any) => {
+    e.preventDefault?.()
+    const ne = e.nativeEvent ?? e
+    const deltaY = ne.deltaY ?? 0
+    if (!deltaY) return
+    const focalX = ne.offsetX ?? ne.clientX ?? W / 2
+    const f = Math.exp(clamp(-deltaY * 0.01, -0.5, 0.5))
+    setView((v) => {
+      const nk = clamp(v.k * f, 1, 300)
+      return { k: nk, tx: clampTx(focalX - (focalX - v.tx) * (nk / v.k), nk, W), ty: v.ty }
+    })
+  }
+
   const pan = Gesture.Pan()
     .runOnJS(true)
     .onChange((e) => {
@@ -382,7 +400,7 @@ export default function StrataCanvas() {
   const btn = { backgroundColor: '#181b22', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 8, paddingVertical: 7, paddingHorizontal: 10 } as const
 
   return (
-    <View style={{ flex: 1, backgroundColor: BG }}>
+    <View style={{ flex: 1, backgroundColor: BG }} {...(Platform.OS === 'web' ? { onWheel } : {})}>
       <GestureDetector gesture={gesture}>
         <Canvas style={{ flex: 1 }}>
           <Fill color={BG} />

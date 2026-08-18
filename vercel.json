@@ -1,0 +1,5 @@
+{
+  "buildCommand": "npx expo export -p web && node scripts/pwa-postexport.mjs",
+  "outputDirectory": "dist",
+  "framework": null
+}

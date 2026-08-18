@@ -44,3 +44,4 @@ yarn-error.*
 fastlane/build/
 fastlane/report.xml
 *.ipa
+.vercel
