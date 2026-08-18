@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Keyboard, Platform, Pressable, ScrollView, Text as RNText, TextInput, useWindowDimensions, View } from 'react-native'
-import { Canvas, Fill, Group, Line, Circle, Text, matchFont, vec } from '@shopify/react-native-skia'
+import { Canvas, Fill, Group, Line, Circle, Text, matchFont, useFont, vec } from '@shopify/react-native-skia'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { BlurView } from 'expo-blur'
 import { MapContext } from './mapContext'
@@ -33,10 +33,14 @@ const fontBoldStyle = { fontFamily: Platform.select({ ios: 'Helvetica', default:
 export default function StrataCanvas() {
   const { config, lens, setLens, openAtlas } = useContext(MapContext)
   const { width: W, height: H } = useWindowDimensions()
-  // matchFont uses the platform system font provider; not implemented on RN Web,
-  // so guard it (web skips text via the `font &&` checks; native gets real fonts).
-  const font = useMemo(() => { try { return matchFont(fontStyle) } catch { return null } }, [])
-  const fontBold = useMemo(() => { try { return matchFont(fontBoldStyle) } catch { return null } }, [])
+  // matchFont uses the OS system font provider -- native only, CanvasKit on web
+  // has no system font access, so web needs a real bundled font file instead.
+  const nativeFont = useMemo(() => { try { return matchFont(fontStyle) } catch { return null } }, [])
+  const nativeFontBold = useMemo(() => { try { return matchFont(fontBoldStyle) } catch { return null } }, [])
+  const webFont = useFont(require('../assets/fonts/Inter-Variable.ttf'), 11)
+  const webFontBold = useFont(require('../assets/fonts/Inter-Variable.ttf'), 12)
+  const font = Platform.OS === 'web' ? webFont : nativeFont
+  const fontBold = Platform.OS === 'web' ? webFontBold : nativeFontBold
 
   const [view, setView] = useState({ k: 1, tx: 0, ty: 0 })
   const viewRef = useRef(view)
