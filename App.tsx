@@ -7,6 +7,7 @@ import Atlas from './src/Atlas';
 import { MapContext, type Lens } from './src/mapContext';
 import { cosmosConfig } from './src/maps/cosmos';
 import { historyConfig } from './src/maps/history';
+import { evolutionConfig } from './src/maps/evolution';
 import { geodeConfig } from './src/maps/geode';
 import { blazonConfig } from './src/maps/blazon';
 import { balladryConfig } from './src/maps/balladry';
@@ -18,6 +19,7 @@ import { configurePurchases } from './src/purchases';
 const CONFIGS: Record<Lens, StrataConfig> = {
   cosmos: cosmosConfig,
   history: historyConfig,
+  evolution: evolutionConfig,
   geode: geodeConfig,
   blazon: blazonConfig,
   balladry: balladryConfig,

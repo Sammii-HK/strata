@@ -13,7 +13,7 @@
 export const APP_PRICE = '£9.99'
 
 export type MapStatus = 'included' | 'owned' | 'locked' | 'coming-soon'
-export type Lens = 'cosmos' | 'history' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythline'
+export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythline'
 
 export interface CatalogEntry {
   id: string
@@ -52,7 +52,11 @@ export const CATALOG: CatalogEntry[] = [
     name: 'Evolution',
     tagline: 'Four billion years of life',
     color: '#2FA98C',
-    status: 'coming-soon',
+    // Built and openable. Priced as a £4.99 pack; the actual purchase gate rides
+    // on the soft-paywall (deep zoom / compare / search), which is Phase-2 for
+    // every pack — until then the overview is fully browsable, as intended.
+    status: 'owned',
+    lens: 'evolution',
     price: '£4.99',
     blurb: 'First cells to us. Clades run as lines; zoom one open into its orders and families. The whole tree of life on a single scale.',
   },

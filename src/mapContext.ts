@@ -1,7 +1,7 @@
 import { createContext } from 'react'
 import type { StrataConfig } from './engine/strata'
 
-export type Lens = 'cosmos' | 'history' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythline'
+export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythline'
 
 // Config + lens control flow to the (web-lazy-loaded) canvas via context, so we
 // don't have to thread props through WithSkiaWeb's getComponent boundary.
