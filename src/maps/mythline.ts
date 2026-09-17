@@ -34,7 +34,7 @@ function compare(a: StrataItem, b: StrataItem): string[] {
 }
 
 export const mythlineConfig: StrataConfig = {
-  id: "mythline",
+  id: "mythologies",
   name: "Mythologies",
   tagline: "Gods and heroes, dated to their first written record",
   scale: 'linear',

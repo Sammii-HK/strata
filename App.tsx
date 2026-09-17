@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Platform, Text as RNText } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
@@ -14,7 +14,7 @@ import { balladryConfig } from './src/maps/balladry';
 import { bestiaryConfig } from './src/maps/bestiary';
 import { mythlineConfig } from './src/maps/mythline';
 import type { StrataConfig } from './src/engine/strata';
-import { configurePurchases } from './src/purchases';
+import { useStore } from './src/useStore';
 
 const CONFIGS: Record<Lens, StrataConfig> = {
   cosmos: cosmosConfig,
@@ -24,12 +24,10 @@ const CONFIGS: Record<Lens, StrataConfig> = {
   blazon: blazonConfig,
   balladry: balladryConfig,
   bestiary: bestiaryConfig,
-  mythline: mythlineConfig,
+  mythologies: mythlineConfig,
 };
 
-let seenIntro = false;
-
-// Both maps ride the same StrataCanvas engine now; the active config flows via
+// All maps ride the same StrataCanvas engine; the active config flows via
 // MapContext. Skia needs CanvasKit before its module imports, so lazy-load on web.
 function LensView() {
   if (Platform.OS === 'web') {
@@ -47,19 +45,22 @@ function LensView() {
 }
 
 export default function App() {
+  // First launch lands straight in Cosmos (free, full depth). No intro wall:
+  // the tips sheet is opt-in from the map menu.
   const [lens, setLens] = useState<Lens>('cosmos');
-  const [showIntro, setShowIntro] = useState(!seenIntro);
+  const [showTips, setShowTips] = useState(false);
   const [showAtlas, setShowAtlas] = useState(false);
-  useEffect(() => { configurePurchases(); }, []);
+  const store = useStore();
   const config = CONFIGS[lens];
   const openAtlas = () => setShowAtlas(true);
+  const openTips = () => setShowTips(true);
   return (
-    <MapContext.Provider value={{ config, lens, setLens, openAtlas }}>
+    <MapContext.Provider value={{ config, lens, setLens, openAtlas, openTips, store }}>
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#101218' }}>
         <StatusBar style="light" />
         <LensView />
         {showAtlas && <Atlas onOpen={(l) => { setLens(l); setShowAtlas(false); }} onClose={() => setShowAtlas(false)} />}
-        {showIntro && <Onboarding lens={lens} onDone={() => { seenIntro = true; setShowIntro(false); }} />}
+        {showTips && <Onboarding lens={lens} onDone={() => setShowTips(false)} />}
       </GestureHandlerRootView>
     </MapContext.Provider>
   );

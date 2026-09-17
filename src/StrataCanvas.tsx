@@ -4,13 +4,16 @@ import { Canvas, Fill, Group, Line, Circle, Text, matchFont, useFont, vec } from
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { BlurView } from 'expo-blur'
 import { MapContext } from './mapContext'
-import { CATALOG, type Lens } from './catalogue'
+import { CATALOG, entryForLens, fallbackPrice, isLensOwned, type CatalogEntry } from './catalogue'
 import type { StrataItem } from './engine/strata'
 
-// Maps openable from the quick-switch: anything included/owned with a live lens.
-const SWITCHABLE_LENSES = CATALOG.filter(
-  (e) => (e.status === 'included' || e.status === 'owned') && e.lens,
-).map((e) => e.lens!) as Lens[]
+// Maps in the quick-switch: every live map. Locked ones open at the overview
+// (soft paywall); only depth is gated.
+const SWITCHABLE = CATALOG.filter((e) => e.lens) as (CatalogEntry & { lens: NonNullable<CatalogEntry['lens']> })[]
+// Zoom cap on a locked map: the sub-lane fan starts opening at k = 3, so this
+// is exactly "the overview, fully browsable, but not the fan".
+const LOCKED_MAX_K = 3
+const MAX_K = 300
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v))
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
@@ -37,7 +40,12 @@ const fontStyle = { fontFamily: Platform.select({ ios: 'Helvetica', default: 'sa
 const fontBoldStyle = { fontFamily: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }) as string, fontSize: 12, fontWeight: '600' as const }
 
 export default function StrataCanvas() {
-  const { config, lens, setLens, openAtlas } = useContext(MapContext)
+  const { config, lens, setLens, openAtlas, openTips, store } = useContext(MapContext)
+  // Soft paywall: locked maps browse freely at the overview; deep zoom, compare
+  // and search raise the unlock bar (nudge) instead of a wall.
+  const locked = !isLensOwned(lens, store.owned)
+  const maxK = locked ? LOCKED_MAX_K : MAX_K
+  const [nudge, setNudge] = useState(false)
   const { width: W, height: H } = useWindowDimensions()
   // matchFont uses the OS system font provider -- native only, CanvasKit on web
   // has no system font access, so web needs a real bundled font file instead.
@@ -87,7 +95,12 @@ export default function StrataCanvas() {
   // flat whole-span overview. Runs once per map on mount.
   useEffect(() => {
     const f = config?.axis.frame
-    if (!config || !f) return
+    if (!config) return
+    if (locked || !f) {
+      // Locked maps open at the whole-span overview, framed later on unlock.
+      setView({ k: 1, tx: 0, ty: 0 })
+      return
+    }
     const axL = (v: number) => (config.scale === 'log' ? Math.log10(v) : v)
     let lov = Infinity
     let hiv = -Infinity
@@ -102,7 +115,7 @@ export default function StrataCanvas() {
     const nk = Math.max(1, Math.min(60, 1 / span))
     const tx = Math.max(W - W * nk, Math.min(0, -uu(f[0]) * W * nk))
     setView({ k: nk, tx, ty: 0 })
-  }, [config, W])
+  }, [config, W, locked])
 
   // Reset transient state when switching maps.
   useEffect(() => {
@@ -116,6 +129,7 @@ export default function StrataCanvas() {
     setSheetHist([])
     setSheetIdx(-1)
     setQuery('')
+    setNudge(false)
   }, [config?.id])
 
   if (!config) return <View style={{ flex: 1, backgroundColor: BG }} />
@@ -184,11 +198,17 @@ export default function StrataCanvas() {
   // Vertical pan bound (how far you can drag down); set during layout below.
   const tyMinRef = useRef(0)
 
-  const zoomBy = (f: number) =>
+  // Zooming past the locked cap does nothing to the view but raises the nudge.
+  const wantsDeeper = (f: number) => {
+    if (locked && f > 1 && viewRef.current.k * f > maxK) setNudge(true)
+  }
+  const zoomBy = (f: number) => {
+    wantsDeeper(f)
     setView((v) => {
-      const nk = clamp(v.k * f, 1, 300)
+      const nk = clamp(v.k * f, 1, maxK)
       return { k: nk, tx: clampTx(W / 2 - (W / 2 - v.tx) * (nk / v.k), nk, W), ty: v.ty }
     })
+  }
 
   // Web only: trackpad pinch and mouse-wheel scroll both arrive as wheel events
   // (trackpad pinch sets ctrlKey), so this is what "pinch or scroll to zoom"
@@ -202,8 +222,9 @@ export default function StrataCanvas() {
     if (!deltaY) return
     const focalX = ne.offsetX ?? ne.clientX ?? W / 2
     const f = Math.exp(clamp(-deltaY * 0.01, -0.5, 0.5))
+    wantsDeeper(f)
     setView((v) => {
-      const nk = clamp(v.k * f, 1, 300)
+      const nk = clamp(v.k * f, 1, maxK)
       return { k: nk, tx: clampTx(focalX - (focalX - v.tx) * (nk / v.k), nk, W), ty: v.ty }
     })
   }
@@ -231,8 +252,9 @@ export default function StrataCanvas() {
     .onUpdate((e) => {
       const f = e.scale / lastScale.current
       lastScale.current = e.scale
+      wantsDeeper(f)
       setView((v) => {
-        const nk = clamp(v.k * f, 1, 300)
+        const nk = clamp(v.k * f, 1, maxK)
         return { k: nk, tx: clampTx(e.focalX - (e.focalX - v.tx) * (nk / v.k), nk, W), ty: v.ty }
       })
     })
@@ -397,7 +419,7 @@ export default function StrataCanvas() {
     if (!q) return
     const hit = ITEMS.find((o) => o.label.toLowerCase().includes(q))
     if (!hit) return
-    const nk = Math.max(viewRef.current.k, 8)
+    const nk = Math.min(maxK, Math.max(viewRef.current.k, 8))
     setView({ k: nk, tx: clampTx(W / 2 - unit(hit.pos) * W * nk, nk, W), ty: 0 })
     setSel([hit.id])
   }
@@ -525,7 +547,7 @@ export default function StrataCanvas() {
               <RNText style={{ color: '#e9eaee', fontSize: 13 }}>Options ▾</RNText>
             </Pressable>
             <View style={{ flex: 1 }} />
-            <Pressable style={btn} onPress={() => setSearchOpen(true)}>
+            <Pressable style={btn} onPress={() => (locked ? setNudge(true) : setSearchOpen(true))}>
               <RNText style={{ color: '#e9eaee', fontSize: 15 }}>⌕</RNText>
             </Pressable>
             <Pressable style={btn} onPress={() => zoomBy(1 / 1.4)}>
@@ -540,15 +562,22 @@ export default function StrataCanvas() {
 
       {mapMenuOpen && (
         <View style={{ position: 'absolute', top: 82, left: 12, zIndex: 30, minWidth: 200, ...menuBox }}>
-          {SWITCHABLE_LENSES.map((l) => (
-            <Pressable key={l} style={item} onPress={() => { setLens(l); setMapMenuOpen(false) }}>
-              <RNText style={{ color: '#e9eaee', fontSize: 14, textTransform: 'capitalize' }}>{l}</RNText>
-              <RNText style={{ color: '#e8b84b' }}>{l === lens ? '✓' : ''}</RNText>
-            </Pressable>
-          ))}
+          {SWITCHABLE.map((e) => {
+            const owned = isLensOwned(e.lens, store.owned)
+            return (
+              <Pressable key={e.lens} style={item} onPress={() => { setLens(e.lens); setMapMenuOpen(false) }}>
+                <RNText style={{ color: '#e9eaee', fontSize: 14 }}>{e.name}</RNText>
+                <RNText style={{ color: owned ? '#e8b84b' : '#6a7280', fontSize: owned ? 14 : 11 }}>{e.lens === lens ? '✓' : owned ? '' : store.prices[e.id] ?? fallbackPrice(e) ?? ''}</RNText>
+              </Pressable>
+            )
+          })}
           <View style={{ height: 1, backgroundColor: '#2a2f39', marginVertical: 4 }} />
           <Pressable style={item} onPress={() => { setMapMenuOpen(false); openAtlas() }}>
             <RNText style={{ color: '#e9eaee', fontSize: 14 }}>Browse all maps</RNText>
+            <RNText style={{ color: '#9aa1ac' }}>›</RNText>
+          </Pressable>
+          <Pressable style={item} onPress={() => { setMapMenuOpen(false); openTips() }}>
+            <RNText style={{ color: '#e9eaee', fontSize: 14 }}>How to use</RNText>
             <RNText style={{ color: '#9aa1ac' }}>›</RNText>
           </Pressable>
         </View>
@@ -601,7 +630,43 @@ export default function StrataCanvas() {
         </View>
       )}
 
-      {!shellOn && selObjs.length === 2 && (
+      {/* ---- unlock bar (soft paywall): deep zoom, compare or search on a locked map ---- */}
+      {locked && (nudge || (!shellOn && selObjs.length === 2)) && (() => {
+        const entry = entryForLens(lens)
+        const price = entry ? store.prices[entry.id] ?? fallbackPrice(entry) : undefined
+        const dismiss = () => { setNudge(false); if (selObjs.length === 2) setSel([selObjs[0].id]) }
+        return (
+          <View onLayout={(e) => setSheetH(e.nativeEvent.layout.height)} style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 14, backgroundColor: '#1a1e26', borderColor: '#e8b84b', borderWidth: 1, borderRadius: 16, padding: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <RNText style={{ color: '#e8b84b', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unlock {config.name}</RNText>
+              <Pressable onPress={dismiss} hitSlop={12}>
+                <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>not now</RNText>
+              </Pressable>
+            </View>
+            <RNText style={{ color: '#c9ccd2', fontSize: 13, lineHeight: 19 }}>
+              {selObjs.length === 2 && !nudge ? 'Comparing two points' : 'Deep zoom and search'} come with the pack. The overview stays free to browse.
+            </RNText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
+              {store.canPurchase && entry ? (
+                <>
+                  <Pressable disabled={store.busy} onPress={() => store.purchase(entry.id)} style={{ backgroundColor: '#2a2233', borderColor: '#e8b84b', borderWidth: 1, borderRadius: 10, paddingVertical: 9, paddingHorizontal: 14 }}>
+                    <RNText style={{ color: '#e9eaee', fontSize: 14, fontWeight: '600' }}>{store.busy ? 'One moment…' : `Unlock ${price ?? ''}`.trim()}</RNText>
+                  </Pressable>
+                  <Pressable disabled={store.busy} onPress={() => { setNudge(false); openAtlas() }} hitSlop={8}>
+                    <RNText style={{ color: '#9aa1ac', fontSize: 13 }}>All packs ›</RNText>
+                  </Pressable>
+                </>
+              ) : (
+                <Pressable onPress={() => { setNudge(false); openAtlas() }} style={{ backgroundColor: '#2a2233', borderColor: '#e8b84b', borderWidth: 1, borderRadius: 10, paddingVertical: 9, paddingHorizontal: 14 }}>
+                  <RNText style={{ color: '#e9eaee', fontSize: 14, fontWeight: '600' }}>{Platform.OS === 'ios' ? 'See packs' : 'Unlock in the iPhone app'}</RNText>
+                </Pressable>
+              )}
+            </View>
+          </View>
+        )
+      })()}
+
+      {!shellOn && selObjs.length === 2 && !locked && (
         <View onLayout={(e) => setSheetH(e.nativeEvent.layout.height)} style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 12, backgroundColor: '#1a1e26', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 16, padding: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <RNText style={{ color: '#9aa1ac', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>The gap</RNText>

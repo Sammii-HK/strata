@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from 'react-native'
-import type { Lens } from './mapContext'
+import type { Lens } from './catalogue'
 
 const HINTS: { icon: string; text: string }[] = [
   { icon: '⤢', text: 'Pinch or scroll to zoom, from a single moment to all of it' },
@@ -34,7 +34,7 @@ export default function Onboarding({ lens, onDone }: { lens: Lens; onDone: () =>
           onPress={onDone}
           style={({ pressed }) => ({ marginTop: 12, backgroundColor: pressed ? '#3a3050' : '#2a2233', borderWidth: 1, borderColor: '#C56BD6', borderRadius: 10, paddingVertical: 12, alignItems: 'center' })}
         >
-          <Text style={{ color: '#e9c6f0', fontSize: 16, fontWeight: '500' }}>Start exploring</Text>
+          <Text style={{ color: '#e9c6f0', fontSize: 16, fontWeight: '500' }}>Got it</Text>
         </Pressable>
       </View>
     </View>
