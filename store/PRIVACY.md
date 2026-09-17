@@ -21,7 +21,7 @@ Questions: <your support email>
 
 ## App Privacy label answers (App Store Connect → App Privacy)
 
-Answer the questionnaire as follows for v1 (paid app, no IAP yet):
+Answer the questionnaire as follows (v1.1: free app with in-app purchases via RevenueCat, no analytics or attribution enabled):
 
 - **Do you collect data from this app?** → **No.**
 

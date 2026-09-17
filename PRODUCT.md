@@ -19,12 +19,13 @@ better on one-time than subscription), plus a discounted "everything" bundle.
 - **Free (the hook): Cosmos / zodiac.** The most viral lens (how small are we), and the
   one Sammii's astrology / Lunary audience will install on day one. Drives installs,
   reviews and word of mouth.
-- **Pack: Recorded history** — built. £3.99
-- **Pack: Life on Earth** (evolution, first life to dinosaurs to humans) — huge family
-  appeal, deep-time log axis already built, the tree-of-life IS the zoom-split. £3.99
-- **Pack: The Deep** (oceans: surface to trenches, shipwrecks, basins) — gorgeous,
-  travels well socially. £3.99
-- **Bundle: everything + future packs** — £9.99
+- **Pack: Recorded history**: built. £2.99 (free for anyone who bought the v1.0 paid app)
+- **Pack: Life on Earth** (evolution, first life to dinosaurs to humans): huge family
+  appeal, deep-time log axis already built, the tree-of-life IS the zoom-split. £2.99
+- **Small packs** (Mythologies, Balladry, Bestiary, Blazon, Geode; built): £1.99 each
+- **Pack: The Deep** (oceans: surface to trenches, shipwrecks, basins): gorgeous,
+  travels well socially. Coming soon.
+- **Bundle: everything + future packs**: £9.99, rising £1 per paid map past seven, capped at £19.99
 
 Family mode is a setting (reuses the sensitivity curation), not a separate app.
 
