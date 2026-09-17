@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from 'react-native'
+import type { Lens } from './mapContext'
 
 const HINTS: { icon: string; text: string }[] = [
   { icon: '⤢', text: 'Pinch or scroll to zoom, from a single moment to all of it' },
@@ -7,11 +8,13 @@ const HINTS: { icon: string; text: string }[] = [
   { icon: '○', text: 'Tap any point for what it is; tap a second to measure the gap' },
 ]
 
-export default function Onboarding({ lens, onDone }: { lens: 'cosmos' | 'history'; onDone: () => void }) {
+export default function Onboarding({ lens, onDone }: { lens: Lens; onDone: () => void }) {
   const tagline =
     lens === 'cosmos'
       ? 'Zoom from the ISS just overhead out to the edge of the observable universe, everything to true scale.'
-      : 'Zoom from a single day out to the whole of recorded history, every civilisation on one map.'
+      : lens === 'history'
+        ? 'Zoom from a single day out to the whole of recorded history, every civilisation on one map.'
+        : 'Zoom from a single moment out to the whole span, everything to scale on one line.'
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(8,9,12,0.86)', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 24 }}>
       <View style={{ width: '100%', maxWidth: 360, backgroundColor: '#14161b', borderRadius: 18, borderWidth: 1, borderColor: '#2a2f39', padding: 26 }}>

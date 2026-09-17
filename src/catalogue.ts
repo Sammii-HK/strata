@@ -13,7 +13,7 @@
 export const APP_PRICE = '£9.99'
 
 export type MapStatus = 'included' | 'owned' | 'locked' | 'coming-soon'
-export type Lens = 'cosmos' | 'history'
+export type Lens = 'cosmos' | 'history' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythline'
 
 export interface CatalogEntry {
   id: string
@@ -73,6 +73,60 @@ export const CATALOG: CatalogEntry[] = [
     status: 'coming-soon',
     price: '£4.99',
     blurb: 'Eons, periods and the five great extinctions on one unbroken scale. See how thin the age of humans really is.',
+  },
+  // ── Built packs (content + map engine wired). Marked `owned` so they open for
+  // review; flip to `locked` at ship time once the RevenueCat products exist —
+  // `ownedPackIds()` then unlocks them via entitlement. Product ids will be
+  // app.lunary.strata.<id>. ──
+  {
+    id: 'geode',
+    name: 'Geode',
+    tagline: 'Crystals and minerals through history',
+    color: '#7FB5C9',
+    status: 'owned',
+    lens: 'geode',
+    price: '£4.99',
+    blurb: 'Every gem and mineral placed at the moment humans first mined or named it, from ochre to synthetic diamond.',
+  },
+  {
+    id: 'mythline',
+    name: 'Mythologies',
+    tagline: 'Gods and heroes, first written down',
+    color: '#D7494C',
+    status: 'owned',
+    lens: 'mythline',
+    price: '£4.99',
+    blurb: 'Six mythologies as parallel lines, each figure dated to its earliest surviving text — Homer, the Pyramid Texts, the Rigveda.',
+  },
+  {
+    id: 'bestiary',
+    name: 'Bestiary',
+    tagline: 'Legendary creatures, first attested',
+    color: '#8A6DC4',
+    status: 'owned',
+    lens: 'bestiary',
+    price: '£4.99',
+    blurb: 'Dragons, kelpies and thunderbirds placed at their first written record. Oral tradition runs older; the ink is where we can point.',
+  },
+  {
+    id: 'balladry',
+    name: 'Balladry',
+    tagline: 'Folk ballads and sea songs',
+    color: '#5AA84F',
+    status: 'owned',
+    lens: 'balladry',
+    price: '£4.99',
+    blurb: 'Child ballads, shanties and murder songs across the eras they were sung, from medieval borders to Appalachian porches.',
+  },
+  {
+    id: 'blazon',
+    name: 'Blazon',
+    tagline: 'Coats of arms and when they were adopted',
+    color: '#C9A227',
+    status: 'owned',
+    lens: 'blazon',
+    price: '£1.99',
+    blurb: "The three lions, the fleur-de-lis, the double eagle — European heraldry placed at the year each was first borne.",
   },
 ]
 
