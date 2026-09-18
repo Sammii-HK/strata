@@ -53,5 +53,5 @@ scale,universe,space,cosmos,constellations,history,timeline,science,infographic,
 - Privacy Policy URL: host store/PRIVACY.md (see that file)
 
 ## Price
-- App: **£9.99** (Tier accordingly in ASC; UK £9.99 maps to a standard tier)
-- IAP later: packs £4.99, Complete £19.99 (see ASC-CHECKLIST.md)
+- App: **Free** (v1.1; v1.0 was £9.99 and those buyers keep History)
+- In-app purchases: History and Evolution £2.99, other packs £1.99, Strata Complete £9.99 (see ASC-CHECKLIST.md)

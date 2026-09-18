@@ -1,76 +1,166 @@
 {
-  "identifier" : "CHRONOLINE_STOREKIT",
-  "nonRenewingSubscriptions" : [],
-  "products" : [
+  "identifier": "CHRONOLINE_STOREKIT",
+  "nonRenewingSubscriptions": [],
+  "products": [
     {
-      "displayPrice" : "4.99",
-      "familyShareable" : false,
-      "internalID" : "CL0001",
-      "localizations" : [
+      "familyShareable": false,
+      "localizations": [
         {
-          "description" : "Four billion years of life on one scale. Clades as lines; zoom one into its orders and families.",
-          "displayName" : "Evolution pack",
-          "locale" : "en_GB"
+          "description": "Civilisations, ideas and events as parallel lines. Zoom a region open into its countries; compare any two moments.",
+          "displayName": "History",
+          "locale": "en_GB"
         }
       ],
-      "productID" : "app.lunary.strata.evolution",
-      "referenceName" : "Evolution pack",
-      "type" : "NonConsumable"
+      "productID": "app.lunary.strata.history",
+      "type": "NonConsumable",
+      "displayPrice": "2.99",
+      "internalID": "CL0001",
+      "referenceName": "History"
     },
     {
-      "displayPrice" : "4.99",
-      "familyShareable" : false,
-      "internalID" : "CL0002",
-      "localizations" : [
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "CL0002",
+      "localizations": [
         {
-          "description" : "Sunlit surface to the hadal trench. Depth is the axis; life, wrecks and geology.",
-          "displayName" : "Oceans pack",
-          "locale" : "en_GB"
+          "description": "Four billion years of life on one scale. Clades as lines; zoom one into its orders and families.",
+          "displayName": "Evolution",
+          "locale": "en_GB"
         }
       ],
-      "productID" : "app.lunary.strata.oceans",
-      "referenceName" : "Oceans pack",
-      "type" : "NonConsumable"
+      "productID": "app.lunary.strata.evolution",
+      "referenceName": "Evolution",
+      "type": "NonConsumable"
     },
     {
-      "displayPrice" : "4.99",
-      "familyShareable" : false,
-      "internalID" : "CL0003",
-      "localizations" : [
+      "familyShareable": false,
+      "localizations": [
         {
-          "description" : "Earth's geological eras and the five great extinctions on one unbroken scale.",
-          "displayName" : "Deep Time pack",
-          "locale" : "en_GB"
+          "description": "Six mythologies as parallel lines, each figure dated to its earliest surviving text.",
+          "displayName": "Mythologies",
+          "locale": "en_GB"
         }
       ],
-      "productID" : "app.lunary.strata.deeptime",
-      "referenceName" : "Deep Time pack",
-      "type" : "NonConsumable"
+      "productID": "app.lunary.strata.mythologies",
+      "type": "NonConsumable",
+      "displayPrice": "1.99",
+      "internalID": "CL0003",
+      "referenceName": "Mythologies"
     },
     {
-      "displayPrice" : "19.99",
-      "familyShareable" : false,
-      "internalID" : "CL0100",
-      "localizations" : [
+      "familyShareable": false,
+      "localizations": [
         {
-          "description" : "Every pack, plus every future map. The whole atlas, one payment.",
-          "displayName" : "Chronoline Complete",
-          "locale" : "en_GB"
+          "description": "Folk ballads, shanties and murder songs across the eras they were sung.",
+          "displayName": "Balladry",
+          "locale": "en_GB"
         }
       ],
-      "productID" : "app.lunary.strata.complete",
-      "referenceName" : "Chronoline Complete",
-      "type" : "NonConsumable"
+      "productID": "app.lunary.strata.balladry",
+      "type": "NonConsumable",
+      "displayPrice": "1.99",
+      "internalID": "CL0004",
+      "referenceName": "Balladry"
+    },
+    {
+      "familyShareable": false,
+      "localizations": [
+        {
+          "description": "Legendary creatures placed at their first written record.",
+          "displayName": "Bestiary",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "app.lunary.strata.bestiary",
+      "type": "NonConsumable",
+      "displayPrice": "1.99",
+      "internalID": "CL0005",
+      "referenceName": "Bestiary"
+    },
+    {
+      "familyShareable": false,
+      "localizations": [
+        {
+          "description": "European coats of arms placed at the year each was first borne.",
+          "displayName": "Blazon",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "app.lunary.strata.blazon",
+      "type": "NonConsumable",
+      "displayPrice": "1.99",
+      "internalID": "CL0006",
+      "referenceName": "Blazon"
+    },
+    {
+      "familyShareable": false,
+      "localizations": [
+        {
+          "description": "Every gem and mineral placed at the moment humans first mined or named it.",
+          "displayName": "Geode",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "app.lunary.strata.geode",
+      "type": "NonConsumable",
+      "displayPrice": "1.99",
+      "internalID": "CL0007",
+      "referenceName": "Geode"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "CL0008",
+      "localizations": [
+        {
+          "description": "Sunlit surface to the hadal trench. Depth is the axis; life, wrecks and geology.",
+          "displayName": "Oceans pack",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "app.lunary.strata.oceans",
+      "referenceName": "Oceans pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "CL0009",
+      "localizations": [
+        {
+          "description": "Earth's geological eras and the five great extinctions on one unbroken scale.",
+          "displayName": "Deep Time pack",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "app.lunary.strata.deeptime",
+      "referenceName": "Deep Time pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "9.99",
+      "familyShareable": false,
+      "internalID": "CL0010",
+      "localizations": [
+        {
+          "description": "Every pack, plus every future map. The whole atlas, one payment, yours forever.",
+          "displayName": "Strata Complete",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "app.lunary.strata.complete",
+      "referenceName": "Strata Complete",
+      "type": "NonConsumable"
     }
   ],
-  "settings" : {
-    "_failTransactionsEnabled" : false,
-    "_locale" : "en_GB",
-    "_storefront" : "GBR"
+  "settings": {
+    "_failTransactionsEnabled": false,
+    "_locale": "en_GB",
+    "_storefront": "GBR"
   },
-  "subscriptionGroups" : [],
-  "version" : {
-    "major" : 3,
-    "minor" : 0
+  "subscriptionGroups": [],
+  "version": {
+    "major": 3,
+    "minor": 0
   }
 }
