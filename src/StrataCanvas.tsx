@@ -47,6 +47,9 @@ export default function StrataCanvas() {
   const maxK = locked ? LOCKED_MAX_K : MAX_K
   const [nudge, setNudge] = useState(false)
   const { width: W, height: H } = useWindowDimensions()
+  const bandsRef = useRef<{ top: number; h: number; laneId: string }[]>([])
+  const fanLockRef = useRef<string | null>(null)
+  const pinchingRef = useRef(false)
   // matchFont uses the OS system font provider -- native only, CanvasKit on web
   // has no system font access, so web needs a real bundled font file instead.
   const nativeFont = useMemo(() => { try { return matchFont(fontStyle) } catch { return null } }, [])
@@ -157,7 +160,13 @@ export default function StrataCanvas() {
   // (so zooming into the Solar System opens it; into the constellations opens them).
   const fanCandidates = config.fanLanes ?? []
   let fanLaneId: string | undefined
-  {
+  // A pinch or wheel zoom remembers the lane band under its focal point when the
+  // fan starts opening (k crosses FAN_K), and holds it until you zoom back out.
+  // Before this, the fan picked whichever fannable lane was most centred
+  // horizontally, so zooming into the constellations could open the Solar
+  // System fan and shove the lane under your fingers into a sliver.
+  if (fanLockRef.current && fanCandidates.includes(fanLockRef.current)) fanLaneId = fanLockRef.current
+  if (!fanLaneId) {
     let best = Infinity
     for (const id of fanCandidates) {
       let sum = 0
@@ -198,6 +207,17 @@ export default function StrataCanvas() {
   // Vertical pan bound (how far you can drag down); set during layout below.
   const tyMinRef = useRef(0)
 
+  // Which lane the fan opens for is decided by where you zoom, not by what
+  // happens to be centred: the band under the focal point when k crosses FAN_K.
+  const FAN_K = 3
+  const lockFanAt = (kFrom: number, kTo: number, focalY: number) => {
+    if (kTo < FAN_K) { fanLockRef.current = null; return }
+    if (kFrom >= FAN_K && fanLockRef.current) return
+    const bandsNow = bandsRef.current
+    const hit = bandsNow.find((b) => focalY >= b.top && focalY < b.top + b.h)
+    if (hit && (config.fanLanes ?? []).includes(hit.laneId)) fanLockRef.current = hit.laneId
+  }
+
   // Zooming past the locked cap does nothing to the view but raises the nudge.
   const wantsDeeper = (f: number) => {
     if (locked && f > 1 && viewRef.current.k * f > maxK) setNudge(true)
@@ -206,6 +226,7 @@ export default function StrataCanvas() {
     wantsDeeper(f)
     setView((v) => {
       const nk = clamp(v.k * f, 1, maxK)
+      if (nk < FAN_K) fanLockRef.current = null
       return { k: nk, tx: clampTx(W / 2 - (W / 2 - v.tx) * (nk / v.k), nk, W), ty: v.ty }
     })
   }
@@ -221,10 +242,12 @@ export default function StrataCanvas() {
     const deltaY = ne.deltaY ?? 0
     if (!deltaY) return
     const focalX = ne.offsetX ?? ne.clientX ?? W / 2
+    const focalY = ne.offsetY ?? ne.clientY ?? H / 2
     const f = Math.exp(clamp(-deltaY * 0.01, -0.5, 0.5))
     wantsDeeper(f)
     setView((v) => {
       const nk = clamp(v.k * f, 1, maxK)
+      lockFanAt(v.k, nk, focalY)
       return { k: nk, tx: clampTx(focalX - (focalX - v.tx) * (nk / v.k), nk, W), ty: v.ty }
     })
   }
@@ -248,6 +271,7 @@ export default function StrataCanvas() {
     .runOnJS(true)
     .onBegin(() => {
       lastScale.current = 1
+      pinchingRef.current = true
     })
     .onUpdate((e) => {
       const f = e.scale / lastScale.current
@@ -255,18 +279,27 @@ export default function StrataCanvas() {
       wantsDeeper(f)
       setView((v) => {
         const nk = clamp(v.k * f, 1, maxK)
+        lockFanAt(v.k, nk, e.focalY)
         return { k: nk, tx: clampTx(e.focalX - (e.focalX - v.tx) * (nk / v.k), nk, W), ty: v.ty }
       })
+    })
+    .onFinalize(() => {
+      // A tap that lands as the second finger lifts is the end of the pinch, not a pick.
+      setTimeout(() => { pinchingRef.current = false }, 180)
     })
   const tap = Gesture.Tap()
     .runOnJS(true)
     .maxDuration(260)
+    .maxDistance(12)
     .onEnd((e) => {
+      if (pinchingRef.current) return
       const vis = visibleRef.current
       let best: (typeof vis)[number] | null = null
       let bd = Infinity
       for (const p of vis) {
-        const d = Math.hypot(p.x - e.x, p.y - e.y)
+        // Lanes are horizontal lines, so being off the line vertically is a
+        // stronger sign of "not this one" than being along it: weight dy double.
+        const d = Math.hypot(p.x - e.x, (p.y - e.y) * 2)
         if (d < bd) {
           bd = d
           best = p
@@ -316,6 +349,7 @@ export default function StrataCanvas() {
   const tyMin = Math.min(0, usableH - contentH)
   tyMinRef.current = tyMin
   const ty = clamp(view.ty, tyMin, 0)
+  bandsRef.current = bands.map((b, vp) => ({ top: b.top + ty, h: b.h, laneId: visLanes[vp].id }))
   const laneCenterY = (laneId: string) => {
     const vp = visPos.get(laneId)
     if (vp == null) return -1000
