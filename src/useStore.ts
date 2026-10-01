@@ -25,7 +25,7 @@ export function useStore(): StoreState {
   const [ready, setReady] = useState(false)
 
   const applySnapshot = useCallback((snap: CustomerSnapshot) => {
-    setOwned(ownedMapIds(snap.active, isLegacyBuyer(snap.originalApplicationVersion)))
+    setOwned(ownedMapIds(snap.active, isLegacyBuyer(snap.originalApplicationVersion, snap.originalPurchaseDate)))
   }, [])
 
   useEffect(() => {

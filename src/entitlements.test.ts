@@ -34,9 +34,20 @@ describe('isLegacyBuyer', () => {
     assert.equal(isLegacyBuyer(''), false)
     assert.equal(isLegacyBuyer('abc'), false)
   })
-  test('tolerates dotted build strings by their leading integer', () => {
-    assert.equal(isLegacyBuyer('3.0'), true)
-    assert.equal(isLegacyBuyer('4.1'), false)
+  test("Apple's sandbox reports '1.0' for everyone: that is NOT a paid-era buyer", () => {
+    // This was the 2.1(b) review failure: App Review's sandbox account read as build 1.
+    assert.equal(isLegacyBuyer('1.0'), false)
+    assert.equal(isLegacyBuyer('3.0'), false)
+    assert.equal(isLegacyBuyer('1.0', '2026-09-21T10:00:00Z'), false)
+  })
+  test('a first purchase on or after the free release is never legacy', () => {
+    assert.equal(isLegacyBuyer('3', '2026-09-17T00:00:00Z'), false)
+    assert.equal(isLegacyBuyer('3', '2026-10-01T09:00:00Z'), false)
+  })
+  test('a real paid-era buyer is legacy, with or without a purchase date', () => {
+    assert.equal(isLegacyBuyer('3', '2026-08-24T12:00:00Z'), true)
+    assert.equal(isLegacyBuyer('3', null), true)
+    assert.equal(isLegacyBuyer('3', 'not-a-date'), true)
   })
 })
 

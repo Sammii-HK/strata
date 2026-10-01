@@ -57,14 +57,17 @@ export function isPurchasesReady(): boolean {
 export interface CustomerSnapshot {
   active: Set<string>
   originalApplicationVersion: string | null
+  /** ISO date of the customer's first purchase of the app; null when unknown. */
+  originalPurchaseDate: string | null
 }
 
-const EMPTY: CustomerSnapshot = { active: new Set(), originalApplicationVersion: null }
+const EMPTY: CustomerSnapshot = { active: new Set(), originalApplicationVersion: null, originalPurchaseDate: null }
 
 function snapshotOf(info: any): CustomerSnapshot {
   return {
     active: new Set(Object.keys(info?.entitlements?.active ?? {})),
     originalApplicationVersion: info?.originalApplicationVersion ?? null,
+    originalPurchaseDate: info?.originalPurchaseDate ?? null,
   }
 }
 
