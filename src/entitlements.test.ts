@@ -56,15 +56,15 @@ describe('resolveOwnedMaps', () => {
     const owned = resolveOwnedMaps(PAID, new Set([COMPLETE_ENTITLEMENT]), false)
     assert.deepEqual(owned, new Set(PAID))
   })
-  test('legacy buyers keep History and nothing else', () => {
-    assert.deepEqual(resolveOwnedMaps(PAID, new Set(), true), new Set(['history']))
+  test('legacy buyers get every paid map: they paid the Complete price', () => {
+    assert.deepEqual(resolveOwnedMaps(PAID, new Set(), true), new Set(PAID))
   })
-  test('legacy plus a pack purchase adds up', () => {
+  test('legacy plus a pack purchase is still everything', () => {
     const owned = resolveOwnedMaps(PAID, new Set(['blazon']), true)
-    assert.deepEqual(owned, new Set(['history', 'blazon']))
+    assert.deepEqual(owned, new Set(PAID))
   })
-  test('legacy grant only applies when history is a paid map', () => {
-    assert.deepEqual(resolveOwnedMaps(['evolution'], new Set(), true), new Set())
+  test('legacy grant covers whatever the paid catalogue is, not just History', () => {
+    assert.deepEqual(resolveOwnedMaps(['evolution'], new Set(), true), new Set(['evolution']))
   })
 })
 

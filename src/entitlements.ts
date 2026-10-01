@@ -18,7 +18,7 @@ export const COMPLETE_ENTITLEMENT = 'strata-complete'
 export const OFFERING_ID = 'strata_default'
 
 /** Build number of the last paid (£9.99) release. Buyers up to and including
- * this build keep History for free. */
+ * this build get every paid map for free. */
 export const LAST_PAID_BUILD = 3
 
 export type PackTier = 'small' | 'big'
@@ -52,12 +52,15 @@ export function isLegacyBuyer(originalApplicationVersion: string | null | undefi
 
 /** Which paid maps are unlocked. `paidIds` is every purchasable map id in the
  * catalogue; `active` is the set of active entitlement ids; `legacy` is
- * isLegacyBuyer(). 'strata-complete' unlocks all; legacy buyers keep 'history'. */
+ * isLegacyBuyer(). 'strata-complete' unlocks all; so does legacy (they paid the
+ * same GBP 9.99 the bundle costs now). */
 export function resolveOwnedMaps(paidIds: readonly string[], active: ReadonlySet<string>, legacy: boolean): Set<string> {
   if (active.has(COMPLETE_ENTITLEMENT)) return new Set(paidIds)
-  const owned = new Set(paidIds.filter((id) => active.has(id)))
-  if (legacy && paidIds.includes('history')) owned.add('history')
-  return owned
+  // Legacy buyers paid GBP 9.99 for the whole app, which is what Complete costs today, so they
+  // get every paid map rather than only the History they strictly bought. Going free must not
+  // leave the people who actually paid with less than a new customer can unlock for the same money.
+  if (legacy) return new Set(paidIds)
+  return new Set(paidIds.filter((id) => active.has(id)))
 }
 
 /** Fallback display price for Strata Complete as a function of how many paid
