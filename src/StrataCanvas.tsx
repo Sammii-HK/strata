@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur'
 import { MapContext } from './mapContext'
 import { CATALOG, entryForLens, fallbackPrice, isLensOwned, type CatalogEntry } from './catalogue'
 import type { StrataItem } from './engine/strata'
+import { FAN_K, clamp, dominantAxis, focusLaneView, layoutBands, lerp, rectFits, zoomAtFocal, type Rect } from './engine/viewport'
 
 // Maps in the quick-switch: every live map. Locked ones open at the overview
 // (soft paywall); only depth is gated.
@@ -15,12 +16,6 @@ const SWITCHABLE = CATALOG.filter((e) => e.lens) as (CatalogEntry & { lens: NonN
 const LOCKED_MAX_K = 3
 const MAX_K = 300
 
-const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v))
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t
-const smooth = (x: number) => {
-  const t = clamp(x, 0, 1)
-  return t * t * (3 - 2 * t)
-}
 const L10 = Math.log10
 const BG = '#101218'
 const TOP = 112
@@ -47,9 +42,14 @@ export default function StrataCanvas() {
   const maxK = locked ? LOCKED_MAX_K : MAX_K
   const [nudge, setNudge] = useState(false)
   const { width: W, height: H } = useWindowDimensions()
-  const bandsRef = useRef<{ top: number; h: number; laneId: string }[]>([])
   const fanLockRef = useRef<string | null>(null)
-  const pinchingRef = useRef(false)
+  const pinchingRef = useRef(false) // true until shortly AFTER a pinch ends (swallows the trailing tap)
+  const pinchActiveRef = useRef(false) // true only while fingers are pinching
+  const lastFocalRef = useRef<{ x: number; y: number } | null>(null)
+  const panAxisRef = useRef<'x' | 'y' | null>(null)
+  const panAccRef = useRef({ x: 0, y: 0 })
+  const renderedFanRef = useRef<string | undefined>(undefined)
+  const navRef = useRef<{ usableH: number; laneIds: string[]; subCount: (id: string) => number }>({ usableH: 0, laneIds: [], subCount: () => 1 })
   // matchFont uses the OS system font provider -- native only, CanvasKit on web
   // has no system font access, so web needs a real bundled font file instead.
   const nativeFont = useMemo(() => { try { return matchFont(fontStyle) } catch { return null } }, [])
@@ -188,10 +188,10 @@ export default function StrataCanvas() {
     if (!fanLaneId && fanCandidates.length) fanLaneId = fanCandidates[0]
   }
   const fanIdx = fanLaneId ? LANES.findIndex((l) => l.id === fanLaneId) : -1
-  const subNames = (() => {
-    if (!fanLaneId) return [] as string[]
+  const subNamesFor = (laneId: string | undefined) => {
+    if (!laneId) return [] as string[]
     const s = new Set<string>()
-    for (const o of ITEMS) if (o.lane === fanLaneId && o.sub) s.add(o.sub)
+    for (const o of ITEMS) if (o.lane === laneId && o.sub) s.add(o.sub)
     const primary = (config.fanPrimary ?? []).filter((x) => s.has(x))
     const featured = config.fanFeatured ? new Set(config.fanFeatured) : null
     let rest = [...s].filter((x) => !primary.includes(x))
@@ -201,34 +201,69 @@ export default function StrataCanvas() {
     }
     rest.sort()
     return [...primary, ...rest]
-  })()
+  }
+  const subNames = subNamesFor(fanLaneId)
+  renderedFanRef.current = fanLaneId
   const subIndex = new Map(subNames.map((c, i) => [c, i]))
 
   // Vertical pan bound (how far you can drag down); set during layout below.
   const tyMinRef = useRef(0)
 
-  // Which lane the fan opens for is decided by where you zoom, not by what
-  // happens to be centred: the band under the focal point when k crosses FAN_K.
-  const FAN_K = 3
-  const lockFanAt = (kFrom: number, kTo: number, focalY: number) => {
-    if (kTo < FAN_K) { fanLockRef.current = null; return }
-    if (kFrom >= FAN_K && fanLockRef.current) return
-    const bandsNow = bandsRef.current
-    const hit = bandsNow.find((b) => focalY >= b.top && focalY < b.top + b.h)
-    if (hit && (config.fanLanes ?? []).includes(hit.laneId)) fanLockRef.current = hit.laneId
+  // Which lane the fan opens for is decided by where you zoom (the band under
+  // the focal point, or the vertically nearest fannable one), and the vertical
+  // pan is re-anchored so that lane stays under your fingers. All maths lives
+  // in engine/viewport.ts.
+  const applyZoom = (factor: number, focalX: number, focalY: number, panDx = 0, panDy = 0) => {
+    const nav = navRef.current
+    const r = zoomAtFocal({
+      view: viewRef.current, factor, focalX, focalY, panDx, panDy, W, maxK, top: TOP,
+      usableH: nav.usableH, laneIds: nav.laneIds, fanLanes: config.fanLanes ?? [], subCount: nav.subCount,
+      // a framed open (k >= FAN_K, no zoom yet) shows a fan nobody has locked: adopt it
+      lock: fanLockRef.current ?? (viewRef.current.k >= FAN_K ? renderedFanRef.current ?? null : null),
+    })
+    fanLockRef.current = r.lock
+    viewRef.current = r.view
+    setView(r.view)
   }
 
   // Zooming past the locked cap does nothing to the view but raises the nudge.
   const wantsDeeper = (f: number) => {
     if (locked && f > 1 && viewRef.current.k * f > maxK) setNudge(true)
   }
+  // +/- buttons zoom about the centre of the lanes, so the lane you are
+  // looking at stays selected.
   const zoomBy = (f: number) => {
     wantsDeeper(f)
-    setView((v) => {
-      const nk = clamp(v.k * f, 1, maxK)
-      if (nk < FAN_K) fanLockRef.current = null
-      return { k: nk, tx: clampTx(W / 2 - (W / 2 - v.tx) * (nk / v.k), nk, W), ty: v.ty }
+    applyZoom(f, W / 2, TOP + navRef.current.usableH / 2)
+  }
+
+  // Switch which lane the fan is open on (tap a lane chip). Tapping the open
+  // lane again closes the fan.
+  const focusLane = (id: string) => {
+    if (!(config.fanLanes ?? []).includes(id)) return false
+    if (hidden.has(id)) setHidden((hs) => { const nx = new Set(hs); nx.delete(id); return nx })
+    if (fanLockRef.current === id && viewRef.current.k >= FAN_K) {
+      fanLockRef.current = null
+      const nv = { k: 1, tx: 0, ty: 0 }
+      viewRef.current = nv
+      setView(nv)
+      return true
+    }
+    if (maxK < FAN_K) { setNudge(true); return true }
+    const nav = navRef.current
+    const r = focusLaneView({
+      view: viewRef.current, laneId: id, W, maxK, top: TOP, usableH: nav.usableH,
+      laneIds: hidden.has(id) ? [...nav.laneIds, id] : nav.laneIds, subCount: nav.subCount,
     })
+    fanLockRef.current = r.lock
+    viewRef.current = r.view
+    setView(r.view)
+    if (locked) setNudge(true)
+    return true
+  }
+  const toggleHidden = (id: string) => {
+    if (fanLockRef.current === id) fanLockRef.current = null
+    setHidden((hs) => { const nx = new Set(hs); if (nx.has(id)) nx.delete(id); else nx.add(id); return nx })
   }
 
   // Web only: trackpad pinch and mouse-wheel scroll both arrive as wheel events
@@ -245,22 +280,39 @@ export default function StrataCanvas() {
     const focalY = ne.offsetY ?? ne.clientY ?? H / 2
     const f = Math.exp(clamp(-deltaY * 0.01, -0.5, 0.5))
     wantsDeeper(f)
-    setView((v) => {
-      const nk = clamp(v.k * f, 1, maxK)
-      lockFanAt(v.k, nk, focalY)
-      return { k: nk, tx: clampTx(focalX - (focalX - v.tx) * (nk / v.k), nk, W), ty: v.ty }
-    })
+    applyZoom(f, focalX, focalY)
   }
 
+  // One-finger drag locks to its dominant axis (horizontal = along time,
+  // vertical = scroll between sub-lanes) so a sideways drag can't wobble the
+  // lanes and vice versa. Ignored while two fingers are pinching.
   const pan = Gesture.Pan()
     .runOnJS(true)
-    .onChange((e) => {
-      setView((v) => ({
-        k: v.k,
-        tx: clampTx(v.tx + e.changeX, v.k, W),
-        ty: clamp(v.ty + e.changeY, tyMinRef.current, 0),
-      }))
+    .onStart(() => {
+      panAxisRef.current = null
+      panAccRef.current = { x: 0, y: 0 }
     })
+    .onChange((e) => {
+      if (pinchActiveRef.current) return
+      if (!panAxisRef.current) {
+        const acc = panAccRef.current
+        acc.x += e.changeX
+        acc.y += e.changeY
+        panAxisRef.current = tyMinRef.current < 0 ? dominantAxis(acc.x, acc.y) : acc.x || acc.y ? 'x' : null
+        if (!panAxisRef.current) return
+        const dx = panAxisRef.current === 'x' ? acc.x : 0
+        const dy = panAxisRef.current === 'y' ? acc.y : 0
+        applyPan(dx, dy)
+        return
+      }
+      applyPan(panAxisRef.current === 'x' ? e.changeX : 0, panAxisRef.current === 'y' ? e.changeY : 0)
+    })
+  const applyPan = (dx: number, dy: number) => {
+    const v = viewRef.current
+    const nv = { k: v.k, tx: clampTx(v.tx + dx, v.k, W), ty: clamp(v.ty + dy, tyMinRef.current, 0) }
+    viewRef.current = nv
+    setView(nv)
+  }
   // The scrubber track is a navigator: drag/tap along it to pan the whole view
   // to that point on the axis (centre the view on the tapped x), so you can jump
   // end-to-end in one move instead of dragging many times.
@@ -271,19 +323,21 @@ export default function StrataCanvas() {
     .runOnJS(true)
     .onBegin(() => {
       lastScale.current = 1
+      lastFocalRef.current = null
       pinchingRef.current = true
+      pinchActiveRef.current = true
     })
     .onUpdate((e) => {
       const f = e.scale / lastScale.current
       lastScale.current = e.scale
+      const last = lastFocalRef.current
+      lastFocalRef.current = { x: e.focalX, y: e.focalY }
       wantsDeeper(f)
-      setView((v) => {
-        const nk = clamp(v.k * f, 1, maxK)
-        lockFanAt(v.k, nk, e.focalY)
-        return { k: nk, tx: clampTx(e.focalX - (e.focalX - v.tx) * (nk / v.k), nk, W), ty: v.ty }
-      })
+      // the fingers' midpoint also carries the view (pinch + drag in one move)
+      applyZoom(f, e.focalX, e.focalY, last ? e.focalX - last.x : 0, last ? e.focalY - last.y : 0)
     })
     .onFinalize(() => {
+      pinchActiveRef.current = false
       // A tap that lands as the second finger lifts is the end of the pinch, not a pick.
       setTimeout(() => { pinchingRef.current = false }, 180)
     })
@@ -327,29 +381,14 @@ export default function StrataCanvas() {
   const nVis = Math.max(1, visLanes.length)
   const visPos = new Map(visLanes.map((l, vp) => [l.id, vp]))
   const fanVis = fanLaneId != null ? visPos.get(fanLaneId) ?? -1 : -1
-
-  const sp = fanVis >= 0 ? smooth(clamp((k - 3) / 3, 0, 1)) : 0
-  const zFrac = fanVis >= 0 ? lerp(1 / nVis, 0.82, sp) : 1 / nVis
-  const otherFrac = nVis > 1 ? (1 - zFrac) / (nVis - 1) : 1
   // The fan band gets a minimum height per sub-lane, so many sub-lanes (e.g. all
   // constellations) can exceed the screen; drag vertically to reach the rest.
-  const MIN_SUB_H = 26
-  const bands: { top: number; h: number }[] = []
-  let contentH = 0
-  {
-    let acc = TOP
-    for (let vp = 0; vp < nVis; vp++) {
-      let bh = usableH * (vp === fanVis ? zFrac : otherFrac)
-      if (vp === fanVis && sp > 0.02) bh = Math.max(bh, mSub * MIN_SUB_H * sp)
-      bands.push({ top: acc, h: bh })
-      acc += bh
-    }
-    contentH = acc - TOP
-  }
-  const tyMin = Math.min(0, usableH - contentH)
+  const { bands, sp, tyMin } = layoutBands({
+    top: TOP, usableH, laneIds: visLanes.map((l) => l.id), fanLaneId: fanVis >= 0 ? fanLaneId : undefined, subCount: mSub, k,
+  })
+  navRef.current = { usableH, laneIds: visLanes.map((l) => l.id), subCount: (id) => Math.max(1, subNamesFor(id).length) }
   tyMinRef.current = tyMin
   const ty = clamp(view.ty, tyMin, 0)
-  bandsRef.current = bands.map((b, vp) => ({ top: b.top + ty, h: b.h, laneId: visLanes[vp].id }))
   const laneCenterY = (laneId: string) => {
     const vp = visPos.get(laneId)
     if (vp == null) return -1000
@@ -377,11 +416,13 @@ export default function StrataCanvas() {
     .sort((a, b) => b.o.importance - a.o.importance)
   visibleRef.current = visible.map((p) => ({ id: p.o.id, x: p.x, y: p.y, r: p.o.importance === 1 ? 6.5 : p.o.importance === 2 ? 4.6 : p.o.importance === 3 ? 3.3 : 2.5 }))
 
+  const laneInView = new Set(visible.map((p) => p.o.lane))
   type Cand = (typeof visible)[number]
   const labels: { p: Cand; side: 1 | -1 }[] = []
-  const up: [number, number][] = []
-  const dn: [number, number][] = []
-  const fits = (list: [number, number][], La: number, Ra: number) => !list.some(([a, b]) => La < b + 8 && Ra > a - 8)
+  // Collide on real rectangles (x span AND y row). The old per-side lists were
+  // global, so labels on different lines blocked each other, while neighbouring
+  // sub-lanes in the fan (26px apart) could still overprint each other.
+  const placed: Rect[] = []
   let toggle = 0
   const place = (cands: Cand[]) => {
     for (const c of cands.sort((a, b) => a.x - b.x)) {
@@ -391,9 +432,10 @@ export default function StrataCanvas() {
       const Ra = right ? c.x : c.x + wpx
       const order: (1 | -1)[] = toggle++ % 2 === 0 ? [-1, 1] : [1, -1]
       for (const side of order) {
-        const list = side === -1 ? up : dn
-        if (fits(list, La, Ra)) {
-          list.push([La, Ra])
+        const base = c.y + (side === -1 ? -9 : 16) // text baseline, as drawn
+        const rect = { l: La, r: Ra, t: base - 11, b: base + 3 }
+        if (rectFits(placed, rect)) {
+          placed.push(rect)
           labels.push({ p: c, side })
           break
         }
@@ -488,6 +530,13 @@ export default function StrataCanvas() {
                 {font && <Text x={8} y={y - 7} text={c.name} font={font} color={c.color} opacity={isFan ? Math.max(0, 1 - sp * 1.6) : 0.92} />}
               </Group>
             )
+          })}
+
+          {font && LANES.map((c) => {
+            // Empty-lane cue: a line with nothing in this stretch says so, instead of looking broken.
+            if (hidden.has(c.id) || (c.id === fanLaneId && sp > 0.3) || laneInView.has(c.id)) return null
+            const msg = 'nothing in view: zoom or pan'
+            return <Text key={`e${c.id}`} x={W / 2 - msg.length * 2.9} y={laneCenterY(c.id) + 16} text={msg} font={font} color={c.color} opacity={0.45} />
           })}
 
           {fanLaneId && fanVis >= 0 && !hidden.has(fanLaneId) && sp > 0.02 &&
@@ -594,6 +643,34 @@ export default function StrataCanvas() {
         )}
       </View>
 
+      {/* ---- lane chips: always-visible way to switch lane view. Tap a fan lane to
+           focus it (tap again to close), hold any lane to hide / show it. ---- */}
+      {!searchOpen && LANES.length > 1 && (
+        <View style={{ position: 'absolute', top: 88, left: 0, right: 0, height: 24, zIndex: 10 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, gap: 6, alignItems: 'center' }}>
+            {LANES.map((c) => {
+              const off = hidden.has(c.id)
+              const canFan = (config.fanLanes ?? []).includes(c.id)
+              const active = !off && c.id === fanLaneId && k >= FAN_K
+              return (
+                <Pressable
+                  key={c.id}
+                  accessibilityLabel={`${c.name} line`}
+                  accessibilityHint={canFan ? 'Tap to focus this line, hold to hide or show it' : 'Tap or hold to hide or show this line'}
+                  onPress={() => { if (!canFan || !focusLane(c.id)) toggleHidden(c.id) }}
+                  onLongPress={() => toggleHidden(c.id)}
+                  hitSlop={{ top: 6, bottom: 6, left: 2, right: 2 }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 3, paddingHorizontal: 8, borderRadius: 12, borderWidth: 1, borderColor: active ? c.color : '#2a2f39', backgroundColor: active ? '#1a1e26' : 'transparent', opacity: off ? 0.4 : 1 }}
+                >
+                  <View style={{ width: 7, height: 7, borderRadius: 2, backgroundColor: c.color }} />
+                  <RNText style={{ color: '#e9eaee', fontSize: 11 }}>{c.name}</RNText>
+                </Pressable>
+              )
+            })}
+          </ScrollView>
+        </View>
+      )}
+
       {mapMenuOpen && (
         <View style={{ position: 'absolute', top: 82, left: 12, zIndex: 30, minWidth: 200, ...menuBox }}>
           {SWITCHABLE.map((e) => {
@@ -633,7 +710,7 @@ export default function StrataCanvas() {
             <View style={{ height: 1, backgroundColor: '#2a2f39', marginVertical: 4 }} />
             <RNText style={{ color: '#9aa1ac', fontSize: 11, paddingHorizontal: 10, paddingBottom: 2 }}>Lines</RNText>
             {LANES.map((c) => (
-              <Pressable key={c.id} style={item} onPress={() => setHidden((hs) => { const nx = new Set(hs); if (nx.has(c.id)) nx.delete(c.id); else nx.add(c.id); return nx })}>
+              <Pressable key={c.id} style={item} onPress={() => toggleHidden(c.id)}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: c.color, opacity: hidden.has(c.id) ? 0.3 : 1 }} />
                   <RNText style={{ color: '#e9eaee', fontSize: 13, opacity: hidden.has(c.id) ? 0.5 : 1 }}>{c.name}</RNText>
