@@ -659,11 +659,11 @@ export default function StrataCanvas() {
                   accessibilityHint={canFan ? 'Tap to focus this line, hold to hide or show it' : 'Tap or hold to hide or show this line'}
                   onPress={() => { if (!canFan || !focusLane(c.id)) toggleHidden(c.id) }}
                   onLongPress={() => toggleHidden(c.id)}
-                  hitSlop={{ top: 6, bottom: 6, left: 2, right: 2 }}
+                  hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 3, paddingHorizontal: 8, borderRadius: 12, borderWidth: 1, borderColor: active ? c.color : '#2a2f39', backgroundColor: active ? '#1a1e26' : 'transparent', opacity: off ? 0.4 : 1 }}
                 >
                   <View style={{ width: 7, height: 7, borderRadius: 2, backgroundColor: c.color }} />
-                  <RNText style={{ color: '#e9eaee', fontSize: 11 }}>{c.name}</RNText>
+                  <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 11 }}>{c.name}</RNText>
                 </Pressable>
               )
             })}
