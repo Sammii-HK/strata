@@ -16,11 +16,6 @@ import { mythlineConfig } from './src/maps/mythline';
 import type { StrataConfig } from './src/engine/strata';
 import { useStore } from './src/useStore';
 
-// Fixed-layout canvas app: text still follows the user's size setting, but only up to 130%, so the header,
-// lane chips and scrubber cannot overflow each other at accessibility sizes.
-const ScalableText = RNText as unknown as { defaultProps?: { maxFontSizeMultiplier?: number } }
-ScalableText.defaultProps = { ...ScalableText.defaultProps, maxFontSizeMultiplier: 1.3 }
-
 const CONFIGS: Record<Lens, StrataConfig> = {
   cosmos: cosmosConfig,
   history: historyConfig,
