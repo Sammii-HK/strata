@@ -643,7 +643,7 @@ export default function StrataCanvas() {
           </>
         ) : (
           <>
-            <Pressable onPress={() => { setMapMenuOpen((v) => !v); setMenuOpen(false) }}>
+            <Pressable style={{ flexShrink: 1 }} onPress={() => { setMapMenuOpen((v) => !v); setMenuOpen(false) }}>
               <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 16, fontWeight: '500' }}>Strata · {config.name} ▾</RNText>
             </Pressable>
             <Pressable style={btn} onPress={() => { setMenuOpen((v) => !v); setMapMenuOpen(false) }}>
