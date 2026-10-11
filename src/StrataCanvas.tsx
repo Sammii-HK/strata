@@ -283,6 +283,15 @@ export default function StrataCanvas() {
     applyZoom(f, focalX, focalY)
   }
 
+  // Declared BEFORE the gesture that uses it: gesture callbacks are compiled as worklets that capture
+  // their variables when the gesture is created, so a helper defined below would be captured as undefined.
+  const applyPan = (dx: number, dy: number) => {
+    const v = viewRef.current
+    const nv = { k: v.k, tx: clampTx(v.tx + dx, v.k, W), ty: clamp(v.ty + dy, tyMinRef.current, 0) }
+    viewRef.current = nv
+    setView(nv)
+  }
+
   // One-finger drag locks to its dominant axis (horizontal = along time,
   // vertical = scroll between sub-lanes) so a sideways drag can't wobble the
   // lanes and vice versa. Ignored while two fingers are pinching.
@@ -307,12 +316,6 @@ export default function StrataCanvas() {
       }
       applyPan(panAxisRef.current === 'x' ? e.changeX : 0, panAxisRef.current === 'y' ? e.changeY : 0)
     })
-  const applyPan = (dx: number, dy: number) => {
-    const v = viewRef.current
-    const nv = { k: v.k, tx: clampTx(v.tx + dx, v.k, W), ty: clamp(v.ty + dy, tyMinRef.current, 0) }
-    viewRef.current = nv
-    setView(nv)
-  }
   // The scrubber track is a navigator: drag/tap along it to pan the whole view
   // to that point on the axis (centre the view on the tapped x), so you can jump
   // end-to-end in one move instead of dragging many times.
