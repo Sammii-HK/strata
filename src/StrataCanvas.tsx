@@ -426,6 +426,18 @@ export default function StrataCanvas() {
   // global, so labels on different lines blocked each other, while neighbouring
   // sub-lanes in the fan (26px apart) could still overprint each other.
   const placed: Rect[] = []
+  // Lane and sub-lane titles are drawn at the left edge: reserve their space so item labels steer around them.
+  for (const c of visLanes) {
+    if (c.id === fanLaneId && sp > 0.3) continue
+    const ly = laneCenterY(c.id)
+    placed.push({ l: 6, r: 10 + c.name.length * 6.4, t: ly - 7 - 11, b: ly - 7 + 3 })
+  }
+  if (fanLaneId && fanVis >= 0 && sp > 0.6) {
+    subNames.forEach((sign, si) => {
+      const sy = subY(si)
+      placed.push({ l: 5, r: 9 + sign.length * 6.4, t: sy - 3 - 11, b: sy - 3 + 3 })
+    })
+  }
   let toggle = 0
   const place = (cands: Cand[]) => {
     for (const c of cands.sort((a, b) => a.x - b.x)) {
