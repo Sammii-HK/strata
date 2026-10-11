@@ -512,15 +512,15 @@ export default function StrataCanvas() {
       <GestureDetector gesture={gesture}>
         <Canvas style={{ flex: 1 }}>
           <Fill color={BG} />
-          {/* Clip lanes to the content area: lanes the fan pushes above/below it must not draw over the header, chip row or scrubber. */}
-          <Group clip={rect(0, TOP - 4, W, H - BOTTOM - SCRUB_H + 30 - (TOP - 4))}>
-
           {ticks.map((t) => (
             <Group key={`t${t.d}`}>
               <Line p1={vec(t.x, TOP - 8)} p2={vec(t.x, H - BOTTOM - SCRUB_H +8)} color="#23272f" strokeWidth={0.5} />
               {font && <Text x={t.x - 20} y={H - BOTTOM - SCRUB_H +24} text={fmt(t.d)} font={font} color="#6a7280" />}
             </Group>
           ))}
+
+          {/* Clip lanes to the content area: lanes the fan pushes above/below it must not draw over the header, chip row or the time axis. */}
+          <Group clip={rect(0, TOP - 4, W, H - BOTTOM - SCRUB_H - (TOP - 4))}>
 
           {LANES.map((c) => {
             if (hidden.has(c.id)) return null
@@ -538,6 +538,8 @@ export default function StrataCanvas() {
             // Empty-lane cue: a line with nothing in this stretch says so, instead of looking broken.
             if (hidden.has(c.id) || (c.id === fanLaneId && sp > 0.3) || laneInView.has(c.id)) return null
             const msg = 'nothing in view: zoom or pan'
+            const cy = laneCenterY(c.id)
+            if (cy < TOP + 6 || cy + 24 > H - BOTTOM - SCRUB_H) return null
             return <Text key={`e${c.id}`} x={W / 2 - msg.length * 2.9} y={laneCenterY(c.id) + 16} text={msg} font={font} color={c.color} opacity={0.45} />
           })}
 
@@ -548,7 +550,7 @@ export default function StrataCanvas() {
               return (
                 <Group key={`zs${sign}`}>
                   <Line p1={vec(clamp(sx(loP), 0, W), y)} p2={vec(clamp(sx(hiP), 0, W), y)} color={fanColor} strokeWidth={1} strokeCap="round" opacity={0.16 + 0.4 * sp} />
-                  {font && sp > 0.6 && laneH > 10 && <Text x={7} y={y + 3} text={sign} font={font} color={fanColor} opacity={(sp - 0.6) / 0.4} />}
+                  {font && sp > 0.6 && laneH > 13 && <Text x={7} y={y - 3} text={sign} font={font} color={fanColor} opacity={(sp - 0.6) / 0.4} />}
                 </Group>
               )
             })}
