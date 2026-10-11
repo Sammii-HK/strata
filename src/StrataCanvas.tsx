@@ -644,20 +644,20 @@ export default function StrataCanvas() {
         ) : (
           <>
             <Pressable onPress={() => { setMapMenuOpen((v) => !v); setMenuOpen(false) }}>
-              <RNText style={{ color: '#e9eaee', fontSize: 16, fontWeight: '500' }}>Strata · {config.name} ▾</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 16, fontWeight: '500' }}>Strata · {config.name} ▾</RNText>
             </Pressable>
             <Pressable style={btn} onPress={() => { setMenuOpen((v) => !v); setMapMenuOpen(false) }}>
-              <RNText style={{ color: '#e9eaee', fontSize: 13 }}>Options ▾</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 13 }}>Options ▾</RNText>
             </Pressable>
             <View style={{ flex: 1 }} />
             <Pressable style={btn} onPress={() => (locked ? setNudge(true) : setSearchOpen(true))}>
-              <RNText style={{ color: '#e9eaee', fontSize: 15 }}>⌕</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}>⌕</RNText>
             </Pressable>
             <Pressable style={btn} onPress={() => zoomBy(1 / 1.4)}>
-              <RNText style={{ color: '#e9eaee', fontSize: 15 }}>–</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}>–</RNText>
             </Pressable>
             <Pressable style={btn} onPress={() => zoomBy(1.4)}>
-              <RNText style={{ color: '#e9eaee', fontSize: 15 }}>+</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}>+</RNText>
             </Pressable>
           </>
         )}
@@ -886,9 +886,9 @@ export default function StrataCanvas() {
         <BlurView intensity={44} tint="dark" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: SCRUB_H, zIndex: 15, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.12)' }}>
           <View style={{ flex: 1 }}>
             <View style={{ position: 'absolute', left: 12, right: 12, top: SCRUB_H / 2 + 5, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.13)' }} />
-            <RNText style={{ position: 'absolute', left: 12, top: 8, color: '#6a7280', fontSize: 10 }}>{fmt(loP)}</RNText>
-            <RNText style={{ position: 'absolute', right: 12, top: 8, color: '#6a7280', fontSize: 10 }}>{fmt(hiP)}</RNText>
-            <RNText style={{ position: 'absolute', left: clamp(thumbLeft + thumbW / 2 - 44, 6, W - 94), top: 8, width: 88, textAlign: 'center', color: '#e8b84b', fontSize: 11, fontWeight: '700' }}>{fmt(shellPos)}</RNText>
+            <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ position: 'absolute', left: 12, top: 8, color: '#6a7280', fontSize: 10 }}>{fmt(loP)}</RNText>
+            <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ position: 'absolute', right: 12, top: 8, color: '#6a7280', fontSize: 10 }}>{fmt(hiP)}</RNText>
+            <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ position: 'absolute', left: clamp(thumbLeft + thumbW / 2 - 44, 6, W - 94), top: 8, width: 88, textAlign: 'center', color: '#e8b84b', fontSize: 11, fontWeight: '700' }}>{fmt(shellPos)}</RNText>
             <View style={{ position: 'absolute', left: thumbLeft, top: SCRUB_H / 2 - 2, width: thumbW, height: 15, borderRadius: 8, backgroundColor: 'rgba(232,184,75,0.28)', borderWidth: 1.5, borderColor: '#e8b84b' }} />
           </View>
         </BlurView>
