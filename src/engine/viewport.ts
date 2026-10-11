@@ -192,7 +192,7 @@ export interface FocusInput {
 
 /** Jump the view to a lane's fan: open it, keep the x centre, scroll its band to the top. */
 export function focusLaneView(inp: FocusInput): ZoomResult {
-  const nk = clamp(Math.max(inp.view.k, inp.targetK ?? FAN_K + 2), 1, inp.maxK)
+  const nk = clamp(Math.max(inp.view.k, inp.targetK ?? FAN_K + 3), 1, inp.maxK)
   const lay = layoutBands({
     top: inp.top, usableH: inp.usableH, laneIds: inp.laneIds,
     fanLaneId: inp.laneId, subCount: inp.subCount(inp.laneId), k: nk,
