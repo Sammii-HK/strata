@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Keyboard, Platform, Pressable, ScrollView, Text as RNText, TextInput, useWindowDimensions, View } from 'react-native'
-import { Canvas, Fill, Group, Line, Circle, Text, matchFont, useFont, vec } from '@shopify/react-native-skia'
+import { Canvas, Fill, Group, Line, Circle, Text, matchFont, rect, useFont, vec } from '@shopify/react-native-skia'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { BlurView } from 'expo-blur'
 import { MapContext } from './mapContext'
@@ -512,6 +512,8 @@ export default function StrataCanvas() {
       <GestureDetector gesture={gesture}>
         <Canvas style={{ flex: 1 }}>
           <Fill color={BG} />
+          {/* Clip lanes to the content area: lanes the fan pushes above/below it must not draw over the header, chip row or scrubber. */}
+          <Group clip={rect(0, TOP - 4, W, H - BOTTOM - SCRUB_H + 30 - (TOP - 4))}>
 
           {ticks.map((t) => (
             <Group key={`t${t.d}`}>
@@ -554,7 +556,7 @@ export default function StrataCanvas() {
           {shellOn && (
             <Group>
               <Line p1={vec(shellX, TOP - 10)} p2={vec(shellX, H - BOTTOM - SCRUB_H +8)} color="#e8b84b" strokeWidth={1.5} />
-              {font && <Text x={shellX - 30} y={TOP - 16} text={fmt(shellPos)} font={font} color="#e8b84b" />}
+              {font && <Text x={shellX - 30} y={TOP + 12} text={fmt(shellPos)} font={font} color="#e8b84b" />}
             </Group>
           )}
 
@@ -592,6 +594,7 @@ export default function StrataCanvas() {
               const right = p.x > W - 150
               return <Text key={`l${p.o.id}`} x={right ? p.x - p.o.label.length * 6.1 - 4 : p.x + 9} y={p.y + (side === -1 ? -9 : 16)} text={p.o.label} font={font} color="#e9eaee" />
             })}
+          </Group>
         </Canvas>
       </GestureDetector>
 
