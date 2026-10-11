@@ -3,6 +3,8 @@
 // tested with node:test.
 
 export const FAN_K = 3
+/** Below this fan spread (0..1) the locked lane is re-picked from the focal point. */
+const REPICK_SP = 0.25
 export const MIN_SUB_H = 26
 export const FAN_FULL_FRAC = 0.82
 
@@ -142,7 +144,9 @@ export function zoomAtFocal(inp: ZoomInput): ZoomResult {
     fanLaneId: lock ?? undefined, subCount: lock ? inp.subCount(lock) : 1, k: v.k,
   })
   const tyBefore = clamp(v.ty, before.tyMin, 0)
-  if (nk >= FAN_K && !lock) lock = pickFanLane(before.bands, inp.fanLanes, inp.focalY, tyBefore) ?? null
+  // Lock the fan to the lane under the fingers. While the locked fan is still barely open (lanes
+  // almost flat), re-pick on every step so a pinch on a different lane is not stuck with a stale lock.
+  if (nk >= FAN_K && (!lock || before.sp < REPICK_SP)) lock = pickFanLane(before.bands, inp.fanLanes, inp.focalY, tyBefore) ?? lock ?? null
 
   const after = layoutBands({
     top: inp.top, usableH: inp.usableH, laneIds: inp.laneIds,

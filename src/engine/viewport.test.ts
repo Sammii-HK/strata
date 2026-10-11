@@ -66,8 +66,16 @@ describe('zoomAtFocal', () => {
     const r2 = zoomAtFocal({ ...base, view: { k: 2.5, tx: -100, ty: 0 }, factor: 1.4, focalY: 460 })
     assert.equal(r2.lock, 'zodiac')
   })
+  test('REGRESSION: a lock made while the fan is barely open is re-picked from where the next pinch lands', () => {
+    // Pinch 1 crosses FAN_K near the solar band and locks it; the lanes are still almost flat.
+    const r1 = zoomAtFocal({ ...base, view: { k: 2.9, tx: 0, ty: 0 }, factor: 1.1, focalY: 230 })
+    assert.equal(r1.lock, 'solar')
+    // Pinch 2 lands on the zodiac band while the fan is still barely open: it must follow the fingers.
+    const r2 = zoomAtFocal({ ...base, view: r1.view, factor: 1.1, focalY: 450, lock: r1.lock })
+    assert.equal(r2.lock, 'zodiac')
+  })
   test('lock persists above FAN_K and clears below it', () => {
-    const up = zoomAtFocal({ ...base, view: { k: 4, tx: -100, ty: 0 }, factor: 1.2, focalY: 460, lock: 'solar' })
+    const up = zoomAtFocal({ ...base, view: { k: 7, tx: -100, ty: 0 }, factor: 1.2, focalY: 460, lock: 'solar' })
     assert.equal(up.lock, 'solar')
     const down = zoomAtFocal({ ...base, view: { k: 3.1, tx: -100, ty: 0 }, factor: 0.5, lock: 'solar' })
     assert.equal(down.lock, null)
