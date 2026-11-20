@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text as RNText, View } from 'react-native'
-import { COMPLETE, fallbackPrice, resolveCatalog, type CatalogEntry, type Lens } from './catalogue'
+import { COMPLETE, SHOW_PRICES, fallbackPrice, resolveCatalog, type CatalogEntry, type Lens } from './catalogue'
 import { MapContext, type StoreState } from './mapContext'
 
 const BG = '#101218'
@@ -19,7 +19,7 @@ function priceFor(entry: CatalogEntry, store: StoreState): string | undefined {
 function StatusChip({ entry, price }: { entry: CatalogEntry; price?: string }) {
   if (entry.status === 'included') return <Chip text="Free" color="#2FA98C" />
   if (entry.status === 'owned') return <Chip text="Unlocked" color="#2FA98C" />
-  if (entry.status === 'locked') return <Chip text={entry.preview ? 'Preview' : price ?? 'Unlock'} color={ACCENT} />
+  if (entry.status === 'locked') return <Chip text={entry.preview ? 'Preview' : !SHOW_PRICES ? 'In the app' : price ?? 'Unlock'} color={ACCENT} />
   return <Chip text="Soon" color={FAINT} />
 }
 
@@ -106,7 +106,7 @@ export default function Atlas({ onOpen, onClose }: { onOpen: (l: Lens) => void; 
           <Pressable disabled={!store.canPurchase || store.busy} onPress={() => store.purchase('complete')} style={{ backgroundColor: PANEL, borderColor: ACCENT, borderWidth: 1, borderRadius: 14, padding: 16, marginTop: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <RNText style={{ color: TEXT, fontSize: 17, fontWeight: '600' }}>{COMPLETE.name}</RNText>
-              {store.busy ? <ActivityIndicator color={ACCENT} /> : <RNText style={{ color: ACCENT, fontSize: 17, fontWeight: '700' }}>{completePrice}</RNText>}
+              {store.busy ? <ActivityIndicator color={ACCENT} /> : <RNText style={{ color: ACCENT, fontSize: SHOW_PRICES ? 17 : 13, fontWeight: '700' }}>{SHOW_PRICES ? completePrice : 'In the app'}</RNText>}
             </View>
             <RNText style={{ color: MUTED, fontSize: 13, marginTop: 6, lineHeight: 19 }}>{COMPLETE.blurb}</RNText>
             {store.canPurchase && <RNText style={{ color: ACCENT, fontSize: 13, fontWeight: '600', marginTop: 10 }}>Unlock everything ›</RNText>}

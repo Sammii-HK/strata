@@ -219,6 +219,10 @@ const ENTRIES: CatalogEntry[] = [
 /** Preview packs open on the web only; elsewhere they read as coming soon. */
 const PREVIEWS_OPEN = Platform.OS === 'web'
 
+/** Prices show only where a pack can be bought: the iPhone app. The web demo
+ * names none; locked packs there read "in the app" instead. */
+export const SHOW_PRICES = Platform.OS !== 'web'
+
 export const CATALOG: CatalogEntry[] = ENTRIES.map((e) =>
   e.preview && !PREVIEWS_OPEN ? { ...e, status: 'coming-soon' } : e,
 )

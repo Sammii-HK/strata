@@ -5,7 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { cancelAnimation, runOnJS, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withDecay, withSpring } from 'react-native-reanimated'
 import { BlurView } from 'expo-blur'
 import { MapContext } from './mapContext'
-import { CATALOG, entryForLens, fallbackPrice, isLensOwned, type CatalogEntry } from './catalogue'
+import { CATALOG, SHOW_PRICES, entryForLens, fallbackPrice, isLensOwned, type CatalogEntry } from './catalogue'
 import type { StrataItem } from './engine/strata'
 import {
   DRIFT_X_FRAC, FAN_K, FLING_MIN_V, clamp, dominantAxis, focusLaneView, frameView, interpView, jumpTx, layoutBands, lerp,
@@ -1048,7 +1048,7 @@ export default function StrataCanvas() {
             return (
               <Pressable key={e.lens} style={item} onPress={() => { setLens(e.lens); setMapMenuOpen(false) }}>
                 <RNText style={{ color: '#e9eaee', fontSize: 14 }}>{e.name}</RNText>
-                <RNText style={{ color: owned ? '#e8b84b' : '#6a7280', fontSize: owned ? 14 : 11 }}>{e.lens === lens ? '✓' : owned ? '' : e.preview ? 'preview' : store.prices[e.id] ?? fallbackPrice(e) ?? ''}</RNText>
+                <RNText style={{ color: owned ? '#e8b84b' : '#6a7280', fontSize: owned ? 14 : 11 }}>{e.lens === lens ? '✓' : owned ? '' : e.preview ? 'preview' : !SHOW_PRICES ? 'in the app' : store.prices[e.id] ?? fallbackPrice(e) ?? ''}</RNText>
               </Pressable>
             )
           })}
