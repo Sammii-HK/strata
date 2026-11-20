@@ -18,7 +18,7 @@ export const COMPLETE_ENTITLEMENT = 'strata-complete'
 export const OFFERING_ID = 'strata_default'
 
 /** Build number of the last paid (£9.99) release. Buyers up to and including
- * this build keep History for free. */
+ * this build get every paid map for free. */
 export const LAST_PAID_BUILD = 3
 
 export type PackTier = 'small' | 'big'
@@ -40,24 +40,47 @@ export function packIdFromProductId(productId: string): string | null {
   return rest && !rest.includes('.') ? rest : null
 }
 
-/** True when the RevenueCat CustomerInfo.originalApplicationVersion (the iOS
- * build number the customer first downloaded) is from the paid era, i.e. the
- * leading integer is <= LAST_PAID_BUILD. Missing or unparseable => false. */
-export function isLegacyBuyer(originalApplicationVersion: string | null | undefined): boolean {
+/** The paid £9.99 build stopped being sold when the free release (build 4) went
+ * out on 17 Sep 2026. A customer whose first purchase is on or after this was
+ * never a paid-era buyer, whatever their reported build number says. */
+export const FREEMIUM_CUTOVER = '2026-09-17T00:00:00Z'
+
+/** True for a customer who bought the paid app: RevenueCat's
+ * CustomerInfo.originalApplicationVersion is a plain integer build number
+ * <= LAST_PAID_BUILD, and (when known) their first purchase predates the free release.
+ *
+ * Apple's sandbox and TestFlight report originalApplicationVersion as "1.0" for
+ * EVERY account. Reading that by its leading integer gave build 1, so every App
+ * Review tester looked like a paid-era buyer and the purchase flow they were
+ * meant to exercise never behaved like a new customer's (2.1(b), Strata 1.1.0).
+ * Real receipts carry the integer build ("3"), so anything not purely digits is
+ * not trusted. Missing or unparseable => false. */
+export function isLegacyBuyer(
+  originalApplicationVersion: string | null | undefined,
+  originalPurchaseDate?: string | null,
+): boolean {
   if (originalApplicationVersion == null) return false
-  const m = String(originalApplicationVersion).trim().match(/^(\d+)/)
-  if (!m) return false
-  return parseInt(m[1], 10) <= LAST_PAID_BUILD
+  const v = String(originalApplicationVersion).trim()
+  if (!/^\d+$/.test(v)) return false
+  if (parseInt(v, 10) > LAST_PAID_BUILD) return false
+  if (originalPurchaseDate) {
+    const bought = Date.parse(originalPurchaseDate)
+    if (!Number.isNaN(bought) && bought >= Date.parse(FREEMIUM_CUTOVER)) return false
+  }
+  return true
 }
 
 /** Which paid maps are unlocked. `paidIds` is every purchasable map id in the
  * catalogue; `active` is the set of active entitlement ids; `legacy` is
- * isLegacyBuyer(). 'strata-complete' unlocks all; legacy buyers keep 'history'. */
+ * isLegacyBuyer(). 'strata-complete' unlocks all; so does legacy (they paid the
+ * same GBP 9.99 the bundle costs now). */
 export function resolveOwnedMaps(paidIds: readonly string[], active: ReadonlySet<string>, legacy: boolean): Set<string> {
   if (active.has(COMPLETE_ENTITLEMENT)) return new Set(paidIds)
-  const owned = new Set(paidIds.filter((id) => active.has(id)))
-  if (legacy && paidIds.includes('history')) owned.add('history')
-  return owned
+  // Legacy buyers paid GBP 9.99 for the whole app, which is what Complete costs today, so they
+  // get every paid map rather than only the History they strictly bought. Going free must not
+  // leave the people who actually paid with less than a new customer can unlock for the same money.
+  if (legacy) return new Set(paidIds)
+  return new Set(paidIds.filter((id) => active.has(id)))
 }
 
 /** Fallback display price for Strata Complete as a function of how many paid
