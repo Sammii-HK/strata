@@ -22,7 +22,7 @@ import { Platform } from 'react-native'
 import { completePrice, resolveOwnedMaps, tierPrice, type PackTier } from './entitlements'
 
 export type MapStatus = 'included' | 'owned' | 'locked' | 'coming-soon'
-export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar' | 'calendarium' | 'starstories' | 'etymos' | 'glyphs'
+export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar' | 'calendarium' | 'starstories' | 'etymos' | 'glyphs' | 'feastdays'
 
 export interface CatalogEntry {
   id: string
@@ -184,6 +184,17 @@ const ENTRIES: CatalogEntry[] = [
     lens: 'glyphs',
     preview: true,
     blurb: '62 scripts from Sumerian cuneiform to Hangul, in lines by type. Zoom a type open into the regions that wrote it, and see how long Linear B or the Maya glyphs sat unread.',
+  },
+  {
+    id: 'feastdays',
+    name: 'Feast Days',
+    tagline: 'The world\'s festivals on one year',
+    color: '#D7494C',
+    status: 'locked',
+    tier: 'small',
+    lens: 'feastdays',
+    preview: true,
+    blurb: '68 religious and cultural festivals from every tradition, laid across a single year. See which feasts from opposite ends of the earth land in the same week.',
   },
   {
     id: 'oceans',
