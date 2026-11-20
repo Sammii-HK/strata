@@ -9,8 +9,9 @@ import type { StrataItem } from './engine/strata'
 import { FAN_K, clamp, dominantAxis, focusLaneView, layoutBands, lerp, rectFits, zoomAtFocal, type Rect } from './engine/viewport'
 
 // Maps in the quick-switch: every live map. Locked ones open at the overview
-// (soft paywall); only depth is gated.
-const SWITCHABLE = CATALOG.filter((e) => e.lens) as (CatalogEntry & { lens: NonNullable<CatalogEntry['lens']> })[]
+// (soft paywall); only depth is gated. Coming-soon entries (including preview
+// packs outside the web) stay out.
+const SWITCHABLE = CATALOG.filter((e) => e.lens && e.status !== 'coming-soon') as (CatalogEntry & { lens: NonNullable<CatalogEntry['lens']> })[]
 // Zoom cap on a locked map: the sub-lane fan starts opening at k = 3, so this
 // is exactly "the overview, fully browsable, but not the fan".
 const LOCKED_MAX_K = 3
@@ -698,7 +699,7 @@ export default function StrataCanvas() {
             return (
               <Pressable key={e.lens} style={item} onPress={() => { setLens(e.lens); setMapMenuOpen(false) }}>
                 <RNText style={{ color: '#e9eaee', fontSize: 14 }}>{e.name}</RNText>
-                <RNText style={{ color: owned ? '#e8b84b' : '#6a7280', fontSize: owned ? 14 : 11 }}>{e.lens === lens ? '✓' : owned ? '' : store.prices[e.id] ?? fallbackPrice(e) ?? ''}</RNText>
+                <RNText style={{ color: owned ? '#e8b84b' : '#6a7280', fontSize: owned ? 14 : 11 }}>{e.lens === lens ? '✓' : owned ? '' : e.preview ? 'preview' : store.prices[e.id] ?? fallbackPrice(e) ?? ''}</RNText>
               </Pressable>
             )
           })}
@@ -769,13 +770,13 @@ export default function StrataCanvas() {
         return (
           <View onLayout={(e) => setSheetH(e.nativeEvent.layout.height)} style={{ position: 'absolute', left: 12, right: 12, bottom: SCRUB_H + 10, zIndex: 14, backgroundColor: '#1a1e26', borderColor: '#e8b84b', borderWidth: 1, borderRadius: 16, padding: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <RNText style={{ color: '#e8b84b', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>Unlock {config.name}</RNText>
+              <RNText style={{ color: '#e8b84b', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>{entry?.preview ? `${config.name} preview` : `Unlock ${config.name}`}</RNText>
               <Pressable onPress={dismiss} hitSlop={12}>
                 <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>not now</RNText>
               </Pressable>
             </View>
             <RNText style={{ color: '#c9ccd2', fontSize: 13, lineHeight: 19 }}>
-              {selObjs.length === 2 && !nudge ? 'Comparing two points' : 'Deep zoom and search'} come with the pack. The overview stays free to browse.
+              {selObjs.length === 2 && !nudge ? 'Comparing two points' : 'Deep zoom and search'} {entry?.preview ? 'arrive with the iPhone pack, which is on its way' : 'come with the pack'}. The overview stays free to browse.
             </RNText>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 }}>
               {store.canPurchase && entry ? (
@@ -789,7 +790,7 @@ export default function StrataCanvas() {
                 </>
               ) : (
                 <Pressable onPress={() => { setNudge(false); openAtlas() }} style={{ backgroundColor: '#2a2233', borderColor: '#e8b84b', borderWidth: 1, borderRadius: 10, paddingVertical: 9, paddingHorizontal: 14 }}>
-                  <RNText style={{ color: '#e9eaee', fontSize: 14, fontWeight: '600' }}>{Platform.OS === 'ios' ? 'See packs' : 'Unlock in the iPhone app'}</RNText>
+                  <RNText style={{ color: '#e9eaee', fontSize: 14, fontWeight: '600' }}>{Platform.OS === 'ios' || entry?.preview ? 'See packs' : 'Unlock in the iPhone app'}</RNText>
                 </Pressable>
               )}
             </View>

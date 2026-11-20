@@ -13,11 +13,16 @@
 // Soft paywall = a locked pack is fully browsable at the overview; only deep
 // zoom (the fan), compare and search raise a gentle unlock bar. Never a wall,
 // never a modal on launch.
+// Preview packs = built and wired in, but with no App Store product yet. The
+// web demo treats them as locked packs (overview free to browse); the iPhone
+// app shows them as coming soon until their in-app purchase exists, so nobody
+// meets an Unlock button with nothing behind it.
 
+import { Platform } from 'react-native'
 import { completePrice, resolveOwnedMaps, tierPrice, type PackTier } from './entitlements'
 
 export type MapStatus = 'included' | 'owned' | 'locked' | 'coming-soon'
-export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies'
+export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements'
 
 export interface CatalogEntry {
   id: string
@@ -30,9 +35,11 @@ export interface CatalogEntry {
   blurb: string
   /** Set when the map is live and openable in-app. */
   lens?: Lens
+  /** Built, but no store product yet: browsable on the web, coming soon in the app. */
+  preview?: boolean
 }
 
-export const CATALOG: CatalogEntry[] = [
+const ENTRIES: CatalogEntry[] = [
   {
     id: 'cosmos',
     name: 'Cosmos',
@@ -113,6 +120,17 @@ export const CATALOG: CatalogEntry[] = [
     blurb: 'The three lions, the fleur-de-lis, the double eagle: European heraldry placed at the year each was first borne.',
   },
   {
+    id: 'elements',
+    name: 'Elements',
+    tagline: 'The periodic table, one discovery at a time',
+    color: '#9C8AE0',
+    status: 'locked',
+    tier: 'small',
+    lens: 'elements',
+    preview: true,
+    blurb: 'Seventy classic elements as a timeline of discovery, from the copper and iron of antiquity to the lanthanides teased out of ore by spectroscopy. Tap any one for who isolated it and where its name comes from.',
+  },
+  {
     id: 'oceans',
     name: 'Oceans',
     tagline: 'Sunlit surface to the trench',
@@ -132,12 +150,21 @@ export const CATALOG: CatalogEntry[] = [
   },
 ]
 
-/** Ids of every purchasable, built map (locked or owned; not coming-soon). */
-export const PAID_MAP_IDS: string[] = CATALOG.filter((e) => e.tier && e.status !== 'coming-soon').map((e) => e.id)
+/** Preview packs open on the web only; elsewhere they read as coming soon. */
+const PREVIEWS_OPEN = Platform.OS === 'web'
 
-/** Fallback display price for an entry, e.g. "£1.99". Undefined for included maps. */
+export const CATALOG: CatalogEntry[] = ENTRIES.map((e) =>
+  e.preview && !PREVIEWS_OPEN ? { ...e, status: 'coming-soon' } : e,
+)
+
+/** Ids of every purchasable, built map (locked or owned; not coming-soon, not
+ * a preview without a store product). */
+export const PAID_MAP_IDS: string[] = CATALOG.filter((e) => e.tier && e.status !== 'coming-soon' && !e.preview).map((e) => e.id)
+
+/** Fallback display price for an entry, e.g. "£1.99". Undefined for included
+ * maps and for previews, which have no store product to price yet. */
 export function fallbackPrice(entry: CatalogEntry): string | undefined {
-  return entry.tier ? tierPrice(entry.tier) : undefined
+  return entry.tier && !entry.preview ? tierPrice(entry.tier) : undefined
 }
 
 /** Map ids unlocked given active RevenueCat entitlements and the legacy-buyer

@@ -19,7 +19,7 @@ function priceFor(entry: CatalogEntry, store: StoreState): string | undefined {
 function StatusChip({ entry, price }: { entry: CatalogEntry; price?: string }) {
   if (entry.status === 'included') return <Chip text="Free" color="#2FA98C" />
   if (entry.status === 'owned') return <Chip text="Unlocked" color="#2FA98C" />
-  if (entry.status === 'locked') return <Chip text={price ?? 'Unlock'} color={ACCENT} />
+  if (entry.status === 'locked') return <Chip text={entry.preview ? 'Preview' : price ?? 'Unlock'} color={ACCENT} />
   return <Chip text="Soon" color={FAINT} />
 }
 
