@@ -16,6 +16,7 @@ import { mythlineConfig } from './src/maps/mythline';
 import { elementsConfig } from './src/maps/elements';
 import { lunarConfig } from './src/maps/lunar';
 import { calendariumConfig } from './src/maps/calendarium';
+import { starStoriesConfig } from './src/maps/starstories';
 import type { StrataConfig } from './src/engine/strata';
 import { useStore } from './src/useStore';
 
@@ -31,6 +32,7 @@ const CONFIGS: Record<Lens, StrataConfig> = {
   elements: elementsConfig,
   lunar: lunarConfig,
   calendarium: calendariumConfig,
+  starstories: starStoriesConfig,
 };
 
 // All maps ride the same StrataCanvas engine; the active config flows via

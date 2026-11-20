@@ -22,7 +22,7 @@ import { Platform } from 'react-native'
 import { completePrice, resolveOwnedMaps, tierPrice, type PackTier } from './entitlements'
 
 export type MapStatus = 'included' | 'owned' | 'locked' | 'coming-soon'
-export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar' | 'calendarium'
+export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar' | 'calendarium' | 'starstories'
 
 export interface CatalogEntry {
   id: string
@@ -151,6 +151,17 @@ const ENTRIES: CatalogEntry[] = [
     lens: 'calendarium',
     preview: true,
     blurb: 'Eighteen calendars, from the Egyptian civil year to ISO week numbers, placed at the year each was introduced or reformed. Solar, lunar, lunisolar and the revolutionary experiments that did not last.',
+  },
+  {
+    id: 'starstories',
+    name: 'Star Stories',
+    tagline: 'One star, retold across history',
+    color: '#4C82C3',
+    status: 'locked',
+    tier: 'small',
+    lens: 'starstories',
+    preview: true,
+    blurb: 'Orion, the Pleiades, the Plough, Sirius and Scorpius as the cultures who named them saw them: Osiris, Matariki, Beidou, the Celestial Wolf, the fishhook of Maui. Each telling placed at its earliest record.',
   },
   {
     id: 'oceans',
