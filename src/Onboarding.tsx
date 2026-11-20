@@ -1,11 +1,13 @@
+import UiIcon from './UiIcon'
+import type { UiIconName } from './UiIcon.types'
 import { Pressable, Text, View } from 'react-native'
 import type { Lens } from './catalogue'
 
-const HINTS: { icon: string; text: string }[] = [
-  { icon: '⤢', text: 'Pinch or scroll to zoom, from a single moment to all of it' },
-  { icon: '↔', text: 'Drag to travel along the line' },
-  { icon: '◐', text: 'Tap the map name up top to switch worlds' },
-  { icon: '○', text: 'Tap any point for what it is; tap a second to measure the gap' },
+const HINTS: { icon: UiIconName; text: string }[] = [
+  { icon: 'expand', text: 'Pinch or scroll to zoom, from a single moment to all of it' },
+  { icon: 'pan', text: 'Drag to travel along the line' },
+  { icon: 'world', text: 'Tap the map name up top to switch worlds' },
+  { icon: 'point', text: 'Tap any point for what it is; tap a second to measure the gap' },
 ]
 
 const TAGLINES: Partial<Record<Lens, string>> = {
@@ -25,7 +27,7 @@ export default function Onboarding({ lens, onDone }: { lens: Lens; onDone: () =>
 
         {HINTS.map((h) => (
           <View key={h.text} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
-            <Text style={{ color: '#C56BD6', fontSize: 20, width: 30 }}>{h.icon}</Text>
+            <Text style={{ color: '#C56BD6', fontSize: 20, width: 30 }}><UiIcon name={h.icon} size={20} /></Text>
             <Text style={{ color: '#d5d7dc', fontSize: 14, lineHeight: 19, flex: 1 }}>{h.text}</Text>
           </View>
         ))}

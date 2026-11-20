@@ -17,7 +17,8 @@
     "react-native-gesture-handler": "~2.31.1",
     "react-native-purchases": "^10.4.0",
     "react-native-reanimated": "4.3.1",
-    "react-native-web": "^0.21.2"
+    "react-native-web": "^0.21.2",
+    "lucide-react": "^0.577.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
@@ -28,8 +29,13 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "node --test \"src/**/*.test.ts\"",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "test": "npm run test:icons && node --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint:icons": "node scripts/lint-icons.mjs",
+    "lint:web": "npm run lint:icons",
+    "lint": "npm run lint:web",
+    "test:icons": "node --test scripts/icons.test.mjs",
+    "test:web": "npm run test:icons && node --test scripts/web-icons.test.mjs"
   },
   "private": true
 }

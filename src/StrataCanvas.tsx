@@ -1,3 +1,4 @@
+import UiIcon from './UiIcon'
 import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AccessibilityInfo, Keyboard, Platform, Pressable, ScrollView, SectionList, Text as RNText, TextInput, useWindowDimensions, View } from 'react-native'
 import { Canvas, Fill, Group, Line, Circle, Text, matchFont, rect, useFont, vec } from '@shopify/react-native-skia'
@@ -985,29 +986,29 @@ export default function StrataCanvas() {
               style={{ flex: 1, backgroundColor: '#181b22', borderColor: '#2a2f39', borderWidth: 1, borderRadius: 8, color: '#e9eaee', paddingVertical: 8, paddingHorizontal: 12, fontSize: 15 }}
             />
             <Pressable style={btn} accessibilityRole="button" accessibilityLabel="Close search" onPress={() => { setSearchOpen(false); setQuery(''); Keyboard.dismiss() }}>
-              <RNText style={{ color: '#e9eaee', fontSize: 15 }}>✕</RNText>
+              <RNText style={{ color: '#e9eaee', fontSize: 15 }}><UiIcon name="close" size={15} /></RNText>
             </Pressable>
           </>
         ) : (
           <>
             <Pressable style={{ flexShrink: 1 }} accessibilityRole="button" accessibilityLabel={`Map: ${config.name}. Switch map`} accessibilityState={{ expanded: mapMenuOpen }} onPress={() => { setMapMenuOpen((v) => !v); setMenuOpen(false) }}>
-              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 16, fontWeight: '500' }}>Strata · {config.name} ▾</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 16, fontWeight: '500' }}>Strata · {config.name} <UiIcon name="chevron-down" size={16} /></RNText>
             </Pressable>
             <Pressable style={btn} accessibilityRole="button" accessibilityLabel="Options" accessibilityState={{ expanded: menuOpen }} onPress={() => { setMenuOpen((v) => !v); setMapMenuOpen(false) }}>
-              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 13 }}>Options ▾</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 13 }}>Options <UiIcon name="chevron-down" size={13} /></RNText>
             </Pressable>
             <View style={{ flex: 1 }} />
             <Pressable style={btn} accessibilityRole="button" accessibilityLabel="List every item" onPress={() => { setListOpen(true); setMenuOpen(false); setMapMenuOpen(false) }}>
-              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}>☰</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}><UiIcon name="list" size={15} /></RNText>
             </Pressable>
             <Pressable style={btn} accessibilityRole="button" accessibilityLabel="Search" onPress={() => (locked ? setNudge(true) : setSearchOpen(true))}>
-              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}>⌕</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}><UiIcon name="search" size={15} /></RNText>
             </Pressable>
             <Pressable style={btn} accessibilityRole="button" accessibilityLabel="Zoom out" onPress={() => zoomBy(1 / 1.4)}>
-              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}>–</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}><UiIcon name="minus" size={15} /></RNText>
             </Pressable>
             <Pressable style={btn} accessibilityRole="button" accessibilityLabel="Zoom in" onPress={() => zoomBy(1.4)}>
-              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}>+</RNText>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}><UiIcon name="plus" size={15} /></RNText>
             </Pressable>
           </>
         )}
@@ -1048,18 +1049,18 @@ export default function StrataCanvas() {
             return (
               <Pressable key={e.lens} style={item} onPress={() => { setLens(e.lens); setMapMenuOpen(false) }}>
                 <RNText style={{ color: '#e9eaee', fontSize: 14 }}>{e.name}</RNText>
-                <RNText style={{ color: owned ? '#e8b84b' : '#6a7280', fontSize: owned ? 14 : 11 }}>{e.lens === lens ? '✓' : owned ? '' : e.preview ? 'preview' : !SHOW_PRICES ? 'in the app' : store.prices[e.id] ?? fallbackPrice(e) ?? ''}</RNText>
+                <RNText style={{ color: owned ? '#e8b84b' : '#6a7280', fontSize: owned ? 14 : 11 }}>{e.lens === lens ? <UiIcon name="check" size={owned ? 14 : 11} /> : owned ? '' : e.preview ? 'preview' : !SHOW_PRICES ? 'in the app' : store.prices[e.id] ?? fallbackPrice(e) ?? ''}</RNText>
               </Pressable>
             )
           })}
           <View style={{ height: 1, backgroundColor: '#2a2f39', marginVertical: 4 }} />
           <Pressable style={item} onPress={() => { setMapMenuOpen(false); openAtlas() }}>
             <RNText style={{ color: '#e9eaee', fontSize: 14 }}>Browse all maps</RNText>
-            <RNText style={{ color: '#9aa1ac' }}>›</RNText>
+            <RNText style={{ color: '#9aa1ac' }}><UiIcon name="chevron-right" /></RNText>
           </Pressable>
           <Pressable style={item} onPress={() => { setMapMenuOpen(false); openTips() }}>
             <RNText style={{ color: '#e9eaee', fontSize: 14 }}>How to use</RNText>
-            <RNText style={{ color: '#9aa1ac' }}>›</RNText>
+            <RNText style={{ color: '#9aa1ac' }}><UiIcon name="chevron-right" /></RNText>
           </Pressable>
         </View>
       )}
@@ -1069,12 +1070,12 @@ export default function StrataCanvas() {
           <ScrollView>
             <Pressable style={item} onPress={() => setShellOn((v) => !v)}>
               <RNText style={{ color: '#e9eaee', fontSize: 13 }}>{config.scrubberLabel}</RNText>
-              <RNText style={{ color: '#e8b84b' }}>{shellOn ? '✓' : ''}</RNText>
+              <RNText style={{ color: '#e8b84b' }}>{shellOn ? <UiIcon name="check" /> : null}</RNText>
             </Pressable>
             {config.fanFeatured && config.fanToggleLabel && (
               <Pressable style={item} onPress={() => setAllSubs((v) => !v)}>
                 <RNText style={{ color: '#e9eaee', fontSize: 13 }}>{config.fanToggleLabel}</RNText>
-                <RNText style={{ color: fanColor }}>{allSubs ? '✓' : ''}</RNText>
+                <RNText style={{ color: fanColor }}>{allSubs ? <UiIcon name="check" /> : null}</RNText>
               </Pressable>
             )}
             <View style={{ height: 1, backgroundColor: '#2a2f39', marginVertical: 4 }} />
@@ -1085,7 +1086,7 @@ export default function StrataCanvas() {
                   <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: c.color, opacity: hidden.has(c.id) ? 0.3 : 1 }} />
                   <RNText style={{ color: '#e9eaee', fontSize: 13, opacity: hidden.has(c.id) ? 0.5 : 1 }}>{c.name}</RNText>
                 </View>
-                <RNText style={{ color: c.color }}>{hidden.has(c.id) ? '' : '✓'}</RNText>
+                <RNText style={{ color: c.color }}>{hidden.has(c.id) ? null : <UiIcon name="check" />}</RNText>
               </Pressable>
             ))}
           </ScrollView>
@@ -1134,7 +1135,7 @@ export default function StrataCanvas() {
                     <RNText style={{ color: '#e9eaee', fontSize: 14, fontWeight: '600' }}>{store.busy ? 'One moment…' : `Unlock ${price ?? ''}`.trim()}</RNText>
                   </Pressable>
                   <Pressable disabled={store.busy} onPress={() => { setNudge(false); openAtlas() }} hitSlop={8}>
-                    <RNText style={{ color: '#9aa1ac', fontSize: 13 }}>All packs ›</RNText>
+                    <RNText style={{ color: '#9aa1ac', fontSize: 13 }}>All packs <UiIcon name="chevron-right" size={13} /></RNText>
                   </Pressable>
                 </>
               ) : (
@@ -1203,16 +1204,16 @@ export default function StrataCanvas() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
                   <Pressable onPress={() => setSheetIdx(sheetIdx - 1)} hitSlop={8}>
-                    <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>‹ Back</RNText>
+                    <RNText style={{ color: '#9aa1ac', fontSize: 14 }}><UiIcon name="chevron-left" /> Back</RNText>
                   </Pressable>
                   {sheetIdx < sheetHist.length - 1 && (
                     <Pressable onPress={() => setSheetIdx(sheetIdx + 1)} hitSlop={8}>
-                      <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>Forward ›</RNText>
+                      <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>Forward <UiIcon name="chevron-right" /></RNText>
                     </Pressable>
                   )}
                 </View>
                 <Pressable onPress={() => { setShellOn(false); setSheetHist([]); setSheetIdx(-1) }} hitSlop={8}>
-                  <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>Close all ✕</RNText>
+                  <RNText style={{ color: '#9aa1ac', fontSize: 14 }}>Close all <UiIcon name="close" /></RNText>
                 </Pressable>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
