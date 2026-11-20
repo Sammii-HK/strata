@@ -14,6 +14,7 @@ import { balladryConfig } from './src/maps/balladry';
 import { bestiaryConfig } from './src/maps/bestiary';
 import { mythlineConfig } from './src/maps/mythline';
 import { elementsConfig } from './src/maps/elements';
+import { lunarConfig } from './src/maps/lunar';
 import type { StrataConfig } from './src/engine/strata';
 import { useStore } from './src/useStore';
 
@@ -27,6 +28,7 @@ const CONFIGS: Record<Lens, StrataConfig> = {
   bestiary: bestiaryConfig,
   mythologies: mythlineConfig,
   elements: elementsConfig,
+  lunar: lunarConfig,
 };
 
 // All maps ride the same StrataCanvas engine; the active config flows via

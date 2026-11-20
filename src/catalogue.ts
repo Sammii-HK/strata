@@ -22,7 +22,7 @@ import { Platform } from 'react-native'
 import { completePrice, resolveOwnedMaps, tierPrice, type PackTier } from './entitlements'
 
 export type MapStatus = 'included' | 'owned' | 'locked' | 'coming-soon'
-export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements'
+export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar'
 
 export interface CatalogEntry {
   id: string
@@ -129,6 +129,17 @@ const ENTRIES: CatalogEntry[] = [
     lens: 'elements',
     preview: true,
     blurb: 'Seventy classic elements as a timeline of discovery, from the copper and iron of antiquity to the lanthanides teased out of ore by spectroscopy. Tap any one for who isolated it and where its name comes from.',
+  },
+  {
+    id: 'lunar',
+    name: 'Lunar Almanac',
+    tagline: 'Missions and eclipses across the space age',
+    color: '#8A93A2',
+    status: 'locked',
+    tier: 'small',
+    lens: 'lunar',
+    preview: true,
+    blurb: 'Every landmark Moon mission from Luna 1 to Chandrayaan-3, plus the eclipses history remembers, from Thales to the Great North American Eclipse. Zoom the missions open into the nations that flew them.',
   },
   {
     id: 'oceans',
