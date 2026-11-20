@@ -308,3 +308,29 @@ export function interpView(a: View, b: View, t: number, W: number, maxK: number)
 
 /** Fling speed (px/s) below which a released drag just stops. */
 export const FLING_MIN_V = 80
+
+// ---------------------------------------------------------------------------
+// Framed opening and the locked-map zoom limit.
+
+/** Widest zoom a framed opening may use. */
+export const FRAME_MAX_K = 60
+/** A locked map may zoom this far past the view it opens on. */
+export const LOCKED_ZOOM = 3
+
+/**
+ * The view that fills the screen with the frame window. u0/u1 are the frame's
+ * ends as fractions of the axis DOMAIN (the same space the canvas draws in):
+ * measuring against the raw item extent put History's frame in the wrong place,
+ * because one 400,000 BC item stretched the extent far past the domain.
+ */
+export function frameView(u0: number, u1: number, W: number): View {
+  const k = clamp(1 / Math.max(1e-6, u1 - u0), 1, FRAME_MAX_K)
+  return { k, tx: clamp(-u0 * W * k, W - W * k, 0), ty: 0 }
+}
+
+/** Zoom limit on a locked map: LOCKED_ZOOM times its opening zoom, so a map
+ * that opens framed on a short window (Lunar Almanac's space age) is as
+ * browsable as one that opens on its whole span. */
+export function lockedMaxK(openK: number, maxK: number): number {
+  return Math.min(maxK, Math.max(1, openK) * LOCKED_ZOOM)
+}

@@ -8,8 +8,8 @@ import { MapContext } from './mapContext'
 import { CATALOG, entryForLens, fallbackPrice, isLensOwned, type CatalogEntry } from './catalogue'
 import type { StrataItem } from './engine/strata'
 import {
-  DRIFT_X_FRAC, FAN_K, FLING_MIN_V, clamp, dominantAxis, focusLaneView, interpView, jumpTx, layoutBands, lerp, liveTransform,
-  needsCommit, panView, rectFits, toDrawn, zoomAtFocal, type Rect, type View as Vw,
+  DRIFT_X_FRAC, FAN_K, FLING_MIN_V, clamp, dominantAxis, focusLaneView, frameView, interpView, jumpTx, layoutBands, lerp,
+  liveTransform, lockedMaxK, needsCommit, panView, rectFits, toDrawn, zoomAtFocal, type Rect, type View as Vw,
 } from './engine/viewport'
 import { useReduceMotion } from './useReduceMotion'
 
@@ -17,9 +17,10 @@ import { useReduceMotion } from './useReduceMotion'
 // (soft paywall); only depth is gated. Coming-soon entries (including preview
 // packs outside the web) stay out.
 const SWITCHABLE = CATALOG.filter((e) => e.lens && e.status !== 'coming-soon') as (CatalogEntry & { lens: NonNullable<CatalogEntry['lens']> })[]
-// Zoom cap on a locked map: the sub-lane fan starts opening at k = 3, so this
-// is exactly "the overview, fully browsable, but not the fan".
-const LOCKED_MAX_K = 3
+// A locked map opens on the same framed window as an owned one and may zoom
+// LOCKED_ZOOM (3x) past it; its sub-lane fans stay closed. So the overview is
+// readable even where the frame is a thin slice of a long axis (Lunar
+// Almanac's space age, Elements' 1700-1950), and the fan stays the paid depth.
 const MAX_K = 300
 
 const L10 = Math.log10
@@ -71,9 +72,22 @@ export default function StrataCanvas() {
   // Soft paywall: locked maps browse freely at the overview; deep zoom, compare
   // and search raise the unlock bar (nudge) instead of a wall.
   const locked = !isLensOwned(lens, store.owned)
-  const maxK = locked ? LOCKED_MAX_K : MAX_K
   const [nudge, setNudge] = useState(false)
   const { width: W, height: H } = useWindowDimensions()
+  // The view each map opens on: config.axis.frame (e.g. Earth's neighbourhood),
+  // measured within the axis domain the canvas draws in, else the whole span.
+  const openView = useMemo<Vw>(() => {
+    const f = config?.axis.frame
+    if (!config || !f) return { k: 1, tx: 0, ty: 0 }
+    const axL = (v: number) => (config.scale === 'log' ? Math.log10(v) : v)
+    let lo = Infinity
+    let hi = -Infinity
+    if (config.axis.domain) [lo, hi] = config.axis.domain
+    else for (const o of config.items) { lo = Math.min(lo, o.pos); hi = Math.max(hi, o.pos) }
+    const u = (v: number) => (axL(v) - axL(lo)) / (axL(hi) - axL(lo))
+    return frameView(u(f[0]), u(f[1]), W)
+  }, [config, W])
+  const maxK = locked ? lockedMaxK(openView.k, MAX_K) : MAX_K
   const reduce = useReduceMotion()
   const renderedFanRef = useRef<string | undefined>(undefined)
   const navRef = useRef<{ usableH: number; laneIds: string[]; subCount: (id: string) => number; nav: Nav }>({
@@ -451,10 +465,9 @@ export default function StrataCanvas() {
     data: (config?.items ?? []).filter((o) => o.lane === l.id).sort((a, b) => a.pos - b.pos),
   })).filter((s) => s.data.length > 0), [config])
 
-  // Open framed on config.axis.frame (e.g. Earth's neighbourhood) instead of the
-  // flat whole-span overview. Switching maps starts at the new map's overview
-  // and springs into its frame; the content eases in either way. A resize just
-  // re-places. Locked maps open at the whole-span overview, framed on unlock.
+  // Every map opens on openView (its frame, or the whole span). Switching maps
+  // starts at the new map's overview and springs into the frame; the content
+  // eases in either way. A resize just re-places.
   const lastMapRef = useRef<string | null>(null)
   const lastLockedRef = useRef(locked)
   useEffect(() => {
@@ -464,23 +477,7 @@ export default function StrataCanvas() {
     lastMapRef.current = config.id
     lastLockedRef.current = locked
     const overview = { k: 1, tx: 0, ty: 0 }
-    let target: Vw = overview
-    const f = config.axis.frame
-    if (!locked && f) {
-      const axL = (v: number) => (config.scale === 'log' ? Math.log10(v) : v)
-      let lov = Infinity
-      let hiv = -Infinity
-      for (const o of config.items) {
-        lov = Math.min(lov, o.pos)
-        hiv = Math.max(hiv, o.pos)
-      }
-      const loA = axL(lov)
-      const hiA = axL(hiv)
-      const uu = (v: number) => (axL(v) - loA) / (hiA - loA)
-      const span = Math.max(1e-6, uu(f[1]) - uu(f[0]))
-      const nk = Math.max(1, Math.min(60, 1 / span))
-      target = { k: nk, tx: clamp(-uu(f[0]) * W * nk, W - W * nk, 0), ty: 0 }
-    }
+    const target = openView
     if (switched) {
       placeView(overview, null)
       if (!reduce) {
@@ -555,7 +552,8 @@ export default function StrataCanvas() {
 
   // Position-aware fan: whichever fannable lane is most centred on screen opens
   // (so zooming into the Solar System opens it; into the constellations opens them).
-  const fanCandidates = config.fanLanes ?? []
+  // Fans are the paid depth: closed on locked maps, whatever the zoom.
+  const fanCandidates = locked ? [] : config.fanLanes ?? []
   let fanLaneId: string | undefined
   // A pinch or wheel zoom remembers the lane band under its focal point when the
   // fan starts opening (k crosses FAN_K), and holds it until you zoom back out.
@@ -615,7 +613,7 @@ export default function StrataCanvas() {
     const nav = navRef.current
     const r = zoomAtFocal({
       view: cur, factor: f, focalX: W / 2, focalY: TOP + nav.usableH / 2, W, maxK, top: TOP,
-      usableH: nav.usableH, laneIds: nav.laneIds, fanLanes: config.fanLanes ?? [], subCount: nav.subCount,
+      usableH: nav.usableH, laneIds: nav.laneIds, fanLanes: fanCandidates, subCount: nav.subCount,
       lock: lockS.value ?? (cur.k >= FAN_K ? renderedFanRef.current ?? null : null),
     })
     glideTo(r.view, r.lock)
@@ -631,14 +629,13 @@ export default function StrataCanvas() {
       glideTo({ k: 1, tx: 0, ty: 0 }, null)
       return true
     }
-    if (maxK < FAN_K) { setNudge(true); return true }
+    if (locked) { setNudge(true); return true } // the fan comes with the pack
     const nav = navRef.current
     const r = focusLaneView({
       view: cur, laneId: id, W, maxK, top: TOP, usableH: nav.usableH,
       laneIds: hidden.has(id) ? [...nav.laneIds, id] : nav.laneIds, subCount: nav.subCount,
     })
     glideTo(r.view, r.lock)
-    if (locked) setNudge(true)
     return true
   }
   const toggleHidden = (id: string) => {

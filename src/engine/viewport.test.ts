@@ -2,7 +2,7 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  DRIFT_X_FRAC, FAN_K, dominantAxis, focusLaneView, interpView, jumpTx, laneAtY, layoutBands, liveTransform,
+  DRIFT_X_FRAC, FAN_K, FRAME_MAX_K, LOCKED_ZOOM, frameView, lockedMaxK, dominantAxis, focusLaneView, interpView, jumpTx, laneAtY, layoutBands, liveTransform,
   needsCommit, panView, pickFanLane, rectFits, subCountOf, toDrawn, zoomAtFocal, zoomX, type ZoomInput,
 } from './viewport.ts'
 
@@ -240,5 +240,34 @@ describe('interpView (spring glides)', () => {
     const o = interpView(a, { k: 300, tx: -400 * 299, ty: 0 }, 1.08, W, 300)
     assert.ok(o.k <= 300 && o.tx >= W - W * o.k && o.tx <= 0)
     assert.ok(interpView({ k: 1, tx: 0, ty: -10 }, a, 1.1, W, 300).ty <= 0)
+  })
+})
+
+describe('frameView / lockedMaxK', () => {
+  test('the frame window fills the screen', () => {
+    const v = frameView(0.6, 0.8, 400)
+    assert.ok(Math.abs(v.k - 5) < 1e-9)
+    // the frame's left end sits at the left edge, its right end at the right
+    assert.ok(Math.abs(0.6 * 400 * v.k + v.tx) < 1e-6)
+    assert.ok(Math.abs(0.8 * 400 * v.k + v.tx - 400) < 1e-6)
+  })
+  test('a frame as wide as the domain is the overview; tiny frames cap', () => {
+    assert.deepEqual(frameView(0, 1, 400), { k: 1, tx: 0, ty: 0 })
+    assert.equal(frameView(0.5, 0.5000001, 400).k, FRAME_MAX_K)
+  })
+  test('REGRESSION: measured in the domain, History opens on its frame', () => {
+    // History: domain [-11000, 2030], frame [-800, 2030], one item at -400,000.
+    const inDomain = (y: number) => (y + 11000) / 13030
+    const inExtent = (y: number) => (y + 400000) / 402030
+    const right = frameView(inDomain(-800), inDomain(2030), 400)
+    const wrong = frameView(inExtent(-800), inExtent(2030), 400)
+    assert.ok(Math.abs(right.k - 13030 / 2830) < 1e-9)
+    assert.equal(wrong.k, FRAME_MAX_K) // the old maths zoomed straight to the cap
+  })
+  test('locked maps may zoom LOCKED_ZOOM past their opening view, within the global cap', () => {
+    assert.equal(lockedMaxK(1, 300), LOCKED_ZOOM)
+    assert.equal(lockedMaxK(0.5, 300), LOCKED_ZOOM)
+    assert.equal(lockedMaxK(37, 300), 37 * LOCKED_ZOOM)
+    assert.equal(lockedMaxK(200, 300), 300)
   })
 })
