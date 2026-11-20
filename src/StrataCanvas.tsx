@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Keyboard, Platform, Pressable, ScrollView, Text as RNText, TextInput, useWindowDimensions, View } from 'react-native'
+import { AccessibilityInfo, Keyboard, Platform, Pressable, ScrollView, SectionList, Text as RNText, TextInput, useWindowDimensions, View } from 'react-native'
 import { Canvas, Fill, Group, Line, Circle, Text, matchFont, rect, useFont, vec } from '@shopify/react-native-skia'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, { cancelAnimation, runOnJS, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withDecay, withSpring } from 'react-native-reanimated'
@@ -136,11 +136,13 @@ export default function StrataCanvas() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [mapMenuOpen, setMapMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [listOpen, setListOpen] = useState(false) // screen-reader friendly list of every item
   const [query, setQuery] = useState('')
   // Scrubber drill-in: a nav stack of item ids. sheetIdx = -1 shows the chips.
   const [sheetHist, setSheetHist] = useState<string[]>([])
   const [sheetIdx, setSheetIdx] = useState(-1)
   const [sheetH, setSheetH] = useState(0) // measured height of the active bottom sheet
+  const listTitleRef = useRef<any>(null)
   const wheelIdleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const visibleRef = useRef<{ id: string; x: number; y: number; r: number }[]>([])
@@ -443,6 +445,11 @@ export default function StrataCanvas() {
     if (!isFinite(lo)) return [0, 1]
     return [lo, hi]
   }, [config])
+  // The list view: every item, by line, in axis order.
+  const listSections = useMemo(() => (config?.lanes ?? []).map((l) => ({
+    lane: l,
+    data: (config?.items ?? []).filter((o) => o.lane === l.id).sort((a, b) => a.pos - b.pos),
+  })).filter((s) => s.data.length > 0), [config])
 
   // Open framed on config.axis.frame (e.g. Earth's neighbourhood) instead of the
   // flat whole-span overview. Switching maps starts at the new map's overview
@@ -497,11 +504,31 @@ export default function StrataCanvas() {
     setMenuOpen(false)
     setMapMenuOpen(false)
     setSearchOpen(false)
+    setListOpen(false)
     setSheetHist([])
     setSheetIdx(-1)
     setQuery('')
     setNudge(false)
   }, [config?.id])
+
+  // The list overlay: move focus into it on open, close on Escape (web).
+  useEffect(() => {
+    if (!listOpen) return
+    const t = setTimeout(() => {
+      const node = listTitleRef.current
+      if (!node) return
+      if (Platform.OS === 'web') node.focus?.()
+      else {
+        const { findNodeHandle } = require('react-native')
+        const h = findNodeHandle(node)
+        if (h) AccessibilityInfo.setAccessibilityFocus(h)
+      }
+    }, 60)
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return () => clearTimeout(t)
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setListOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => { clearTimeout(t); window.removeEventListener('keydown', onKey) }
+  }, [listOpen])
 
   if (!config) return <View style={{ flex: 1, backgroundColor: BG }} />
 
@@ -655,6 +682,15 @@ export default function StrataCanvas() {
     wheelIdleRef.current = setTimeout(() => { const v = liveView(); commit(v.k, v.tx, v.ty, lockS.value) }, 140)
   }
 
+  // Open an item from the list: select it and glide the map to it.
+  const showItem = (o: StrataItem) => {
+    setListOpen(false)
+    if (hidden.has(o.lane)) setHidden((hs) => { const nx = new Set(hs); nx.delete(o.lane); return nx })
+    const cur = liveView()
+    const nk = Math.min(maxK, Math.max(cur.k, 4))
+    glideTo({ k: nk, tx: clampTx(W / 2 - unit(clamp(o.pos, loP, hiP)) * W * nk, nk, W), ty: cur.ty })
+    setSel([o.id])
+  }
 
   // ---- layout: one band per VISIBLE lane (hidden lanes reclaim their space);
   // the fan lane expands into sub-lanes on zoom ----
@@ -816,7 +852,13 @@ export default function StrataCanvas() {
 
   return (
     <View style={{ flex: 1, backgroundColor: BG }} {...(Platform.OS === 'web' ? { onWheel } : {})}>
-      <View style={{ flex: 1 }}>
+      {/* The canvas is one picture to assistive tech; the list view (header ☰) carries its items. */}
+      <View
+        style={{ flex: 1 }}
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={`${config.name} map: ${ITEMS.length} items on ${LANES.length} lines. Open the list to browse them.`}
+      >
       <GestureDetector gesture={gesture}>
         <Canvas style={{ flex: 1 }}>
           <Fill color={BG} />
@@ -958,6 +1000,9 @@ export default function StrataCanvas() {
               <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 13 }}>Options ▾</RNText>
             </Pressable>
             <View style={{ flex: 1 }} />
+            <Pressable style={btn} accessibilityRole="button" accessibilityLabel="List every item" onPress={() => { setListOpen(true); setMenuOpen(false); setMapMenuOpen(false) }}>
+              <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}>☰</RNText>
+            </Pressable>
             <Pressable style={btn} accessibilityRole="button" accessibilityLabel="Search" onPress={() => (locked ? setNudge(true) : setSearchOpen(true))}>
               <RNText maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ color: '#e9eaee', fontSize: 15 }}>⌕</RNText>
             </Pressable>
@@ -1202,6 +1247,54 @@ export default function StrataCanvas() {
         </BlurView>
       </GestureDetector>
 
+      {/* ---- list view: every item of this map, by line, for screen readers and keyboards ---- */}
+      {listOpen && (
+        <View
+          accessibilityViewIsModal
+          {...(Platform.OS === 'web' ? ({ role: 'dialog', 'aria-modal': true, 'aria-label': `${config.name} items` } as any) : {})}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 40, backgroundColor: BG }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 52, paddingHorizontal: 18, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#2a2f39' }}>
+            <View style={{ flex: 1 }}>
+              <RNText ref={listTitleRef} {...(Platform.OS === 'web' ? ({ tabIndex: -1 } as any) : {})} accessibilityRole="header" style={{ color: '#e9eaee', fontSize: 20, fontWeight: '600' }}>{config.name}</RNText>
+              <RNText style={{ color: '#9aa1ac', fontSize: 12, marginTop: 2 }}>{ITEMS.length} items on {LANES.length} lines, in order along each line</RNText>
+            </View>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close the list" onPress={() => setListOpen(false)} hitSlop={12} style={btn}>
+              <RNText style={{ color: '#e9eaee', fontSize: 14 }}>Done</RNText>
+            </Pressable>
+          </View>
+          <SectionList
+            sections={listSections}
+            keyExtractor={(o) => o.id}
+            stickySectionHeadersEnabled
+            initialNumToRender={30}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            renderSectionHeader={({ section }) => (
+              <View style={{ backgroundColor: '#14161c', paddingHorizontal: 18, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: section.lane.color }} />
+                <RNText accessibilityRole="header" style={{ color: '#c9ccd2', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {section.lane.name} · {section.data.length}
+                </RNText>
+              </View>
+            )}
+            renderItem={({ item: o }) => (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${o.label}, ${fmt(o.pos)}${config.originLabel ?? ''}${o.sub ? `, ${o.sub}` : ''}`}
+                accessibilityHint="Shows it on the map"
+                onPress={() => showItem(o)}
+                style={({ pressed }) => ({ paddingHorizontal: 18, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: '#1c2028', backgroundColor: pressed ? '#1a1e26' : 'transparent' })}
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+                  <RNText style={{ color: '#e9eaee', fontSize: 15, flexShrink: 1, fontWeight: o.importance === 1 ? '600' : '400' }}>{o.label}</RNText>
+                  <RNText style={{ color: '#e8b84b', fontSize: 13 }}>{fmt(o.pos)}</RNText>
+                </View>
+                {o.note ? <RNText numberOfLines={2} style={{ color: '#9aa1ac', fontSize: 12.5, lineHeight: 18, marginTop: 3 }}>{o.note}</RNText> : null}
+              </Pressable>
+            )}
+          />
+        </View>
+      )}
     </View>
   )
 }
