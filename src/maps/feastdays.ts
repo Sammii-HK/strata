@@ -102,7 +102,7 @@ export const feastdaysConfig: StrataConfig = {
   scale: 'linear',
   // The whole year is short enough to show at once; open framed on it and let
   // the ring itself (not a pinch-zoom window) be the discovery mechanic.
-  axis: { kind: 'time', format: fmtDoy, ticks: [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366], frame: [1, 366], domain: [1, 366] },
+  axis: { kind: 'time', format: fmtDoy, ticks: [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335], frame: [1, 365], domain: [1, 365] },
   lanes: LANES,
   items,
   compare,
