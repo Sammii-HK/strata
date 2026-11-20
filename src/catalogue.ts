@@ -22,7 +22,7 @@ import { Platform } from 'react-native'
 import { completePrice, resolveOwnedMaps, tierPrice, type PackTier } from './entitlements'
 
 export type MapStatus = 'included' | 'owned' | 'locked' | 'coming-soon'
-export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar' | 'calendarium' | 'starstories'
+export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar' | 'calendarium' | 'starstories' | 'etymos'
 
 export interface CatalogEntry {
   id: string
@@ -162,6 +162,17 @@ const ENTRIES: CatalogEntry[] = [
     lens: 'starstories',
     preview: true,
     blurb: 'Orion, the Pleiades, the Plough, Sirius and Scorpius as the cultures who named them saw them: Osiris, Matariki, Beidou, the Celestial Wolf, the fishhook of Maui. Each telling placed at its earliest record.',
+  },
+  {
+    id: 'etymos',
+    name: 'Etymos',
+    tagline: 'A tube map of English word origins',
+    color: '#E0699A',
+    status: 'locked',
+    tier: 'small',
+    lens: 'etymos',
+    preview: true,
+    blurb: '81 everyday English words traced back through Old Norse, Latin, Greek, Arabic and Proto-Indo-European, each drawn as a journey from its earliest root to the year its modern spelling settled.',
   },
   {
     id: 'oceans',
