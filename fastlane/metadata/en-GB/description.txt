@@ -2,11 +2,13 @@ One engine, many worlds.
 
 Strata is a single, living map you can zoom. Start at the whole picture, then zoom in and every line opens into many. Everything sits at its true scale, so the distances and the gaps are real, not decorative.
 
-Two maps are included:
+Cosmos is free for everyone.
 
 Cosmos. From the space station just overhead, out past the planets, the nearest stars, every visible constellation, the Milky Way, and on to the edge of the observable universe. Zoom into a constellation and it splits into its real stars at their true distances, the shape was only ever a trick of our viewing angle.
 
 History. Civilisations, ideas and events as parallel coloured lines, like a tube map of the past. Zoom a region open into its countries. See what was happening everywhere else at any single moment.
+
+More packs to unlock: Evolution (four billion years of life), Geode (crystals and minerals), Mythologies, Bestiary, Balladry and Blazon. Or unlock every pack, now and in future, with Strata Complete.
 
 What you can do:
 - Zoom smoothly from the tiniest detail to the whole span
@@ -16,6 +18,6 @@ What you can do:
 - Search, and jump straight to it
 - Turn individual lines on and off to focus
 
-More maps are on the way, Evolution, Oceans, Deep Time, each one the same lens pointed at a new subject.
+More maps are on the way, each one the same lens pointed at a new subject.
 
 No accounts. No ads. No tracking. Just something beautiful to get lost in.

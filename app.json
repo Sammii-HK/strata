@@ -2,7 +2,7 @@
   "expo": {
     "name": "Strata",
     "slug": "chronoline-app",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -12,7 +12,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "app.lunary.strata",
       "appleTeamId": "ASG43SHM5N",
-      "buildNumber": "3",
+      "buildNumber": "5",
       "config": {
         "usesNonExemptEncryption": false
       }

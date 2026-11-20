@@ -1,17 +1,22 @@
 import { Pressable, Text, View } from 'react-native'
+import type { Lens } from './catalogue'
 
 const HINTS: { icon: string; text: string }[] = [
   { icon: '⤢', text: 'Pinch or scroll to zoom, from a single moment to all of it' },
   { icon: '↔', text: 'Drag to travel along the line' },
-  { icon: '◐', text: 'Tap Cosmos or History up top to switch universe' },
+  { icon: '◐', text: 'Tap the map name up top to switch worlds' },
   { icon: '○', text: 'Tap any point for what it is; tap a second to measure the gap' },
 ]
 
-export default function Onboarding({ lens, onDone }: { lens: 'cosmos' | 'history'; onDone: () => void }) {
-  const tagline =
-    lens === 'cosmos'
-      ? 'Zoom from the ISS just overhead out to the edge of the observable universe, everything to true scale.'
-      : 'Zoom from a single day out to the whole of recorded history, every civilisation on one map.'
+const TAGLINES: Partial<Record<Lens, string>> = {
+  cosmos: 'Zoom from the ISS just overhead out to the edge of the observable universe, everything to true scale.',
+  history: 'Zoom from a single day out to the whole of recorded history, every civilisation on one map.',
+  evolution: 'Zoom from the first cells out to four billion years of life, the whole tree on a single scale.',
+}
+const DEFAULT_TAGLINE = 'Zoom from a single moment out to the whole span, everything to scale on one line.'
+
+export default function Onboarding({ lens, onDone }: { lens: Lens; onDone: () => void }) {
+  const tagline = TAGLINES[lens] ?? DEFAULT_TAGLINE
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(8,9,12,0.86)', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 24 }}>
       <View style={{ width: '100%', maxWidth: 360, backgroundColor: '#14161b', borderRadius: 18, borderWidth: 1, borderColor: '#2a2f39', padding: 26 }}>
@@ -29,7 +34,7 @@ export default function Onboarding({ lens, onDone }: { lens: 'cosmos' | 'history
           onPress={onDone}
           style={({ pressed }) => ({ marginTop: 12, backgroundColor: pressed ? '#3a3050' : '#2a2233', borderWidth: 1, borderColor: '#C56BD6', borderRadius: 10, paddingVertical: 12, alignItems: 'center' })}
         >
-          <Text style={{ color: '#e9c6f0', fontSize: 16, fontWeight: '500' }}>Start exploring</Text>
+          <Text style={{ color: '#e9c6f0', fontSize: 16, fontWeight: '500' }}>Got it</Text>
         </Pressable>
       </View>
     </View>
