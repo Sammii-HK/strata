@@ -18,6 +18,7 @@ import { lunarConfig } from './src/maps/lunar';
 import { calendariumConfig } from './src/maps/calendarium';
 import { starStoriesConfig } from './src/maps/starstories';
 import { etymosConfig } from './src/maps/etymos';
+import { glyphsConfig } from './src/maps/glyphs';
 import type { StrataConfig } from './src/engine/strata';
 import { useStore } from './src/useStore';
 
@@ -35,6 +36,7 @@ const CONFIGS: Record<Lens, StrataConfig> = {
   calendarium: calendariumConfig,
   starstories: starStoriesConfig,
   etymos: etymosConfig,
+  glyphs: glyphsConfig,
 };
 
 // All maps ride the same StrataCanvas engine; the active config flows via

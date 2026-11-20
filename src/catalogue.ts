@@ -22,7 +22,7 @@ import { Platform } from 'react-native'
 import { completePrice, resolveOwnedMaps, tierPrice, type PackTier } from './entitlements'
 
 export type MapStatus = 'included' | 'owned' | 'locked' | 'coming-soon'
-export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar' | 'calendarium' | 'starstories' | 'etymos'
+export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar' | 'calendarium' | 'starstories' | 'etymos' | 'glyphs'
 
 export interface CatalogEntry {
   id: string
@@ -173,6 +173,17 @@ const ENTRIES: CatalogEntry[] = [
     lens: 'etymos',
     preview: true,
     blurb: '81 everyday English words traced back through Old Norse, Latin, Greek, Arabic and Proto-Indo-European, each drawn as a journey from its earliest root to the year its modern spelling settled.',
+  },
+  {
+    id: 'glyphs',
+    name: 'Glyphs',
+    tagline: 'Writing systems, read and unread',
+    color: '#B5713E',
+    status: 'locked',
+    tier: 'small',
+    lens: 'glyphs',
+    preview: true,
+    blurb: '62 scripts from Sumerian cuneiform to Hangul, in lines by type. Zoom a type open into the regions that wrote it, and see how long Linear B or the Maya glyphs sat unread.',
   },
   {
     id: 'oceans',
