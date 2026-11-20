@@ -22,7 +22,7 @@ import { Platform } from 'react-native'
 import { completePrice, resolveOwnedMaps, tierPrice, type PackTier } from './entitlements'
 
 export type MapStatus = 'included' | 'owned' | 'locked' | 'coming-soon'
-export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar'
+export type Lens = 'cosmos' | 'history' | 'evolution' | 'geode' | 'blazon' | 'balladry' | 'bestiary' | 'mythologies' | 'elements' | 'lunar' | 'calendarium'
 
 export interface CatalogEntry {
   id: string
@@ -140,6 +140,17 @@ const ENTRIES: CatalogEntry[] = [
     lens: 'lunar',
     preview: true,
     blurb: 'Every landmark Moon mission from Luna 1 to Chandrayaan-3, plus the eclipses history remembers, from Thales to the Great North American Eclipse. Zoom the missions open into the nations that flew them.',
+  },
+  {
+    id: 'calendarium',
+    name: 'Calendarium',
+    tagline: 'Every calendar humanity has kept time by',
+    color: '#C9A26B',
+    status: 'locked',
+    tier: 'small',
+    lens: 'calendarium',
+    preview: true,
+    blurb: 'Eighteen calendars, from the Egyptian civil year to ISO week numbers, placed at the year each was introduced or reformed. Solar, lunar, lunisolar and the revolutionary experiments that did not last.',
   },
   {
     id: 'oceans',
