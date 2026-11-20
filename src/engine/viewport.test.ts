@@ -2,7 +2,8 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  FAN_K, dominantAxis, focusLaneView, laneAtY, layoutBands, pickFanLane, rectFits, zoomAtFocal, zoomX, type ZoomInput,
+  DRIFT_X_FRAC, FAN_K, dominantAxis, focusLaneView, interpView, jumpTx, laneAtY, layoutBands, liveTransform,
+  needsCommit, panView, pickFanLane, rectFits, subCountOf, toDrawn, zoomAtFocal, zoomX, type ZoomInput,
 } from './viewport.ts'
 
 const laneIds = ['a', 'solar', 'b', 'zodiac']
@@ -148,5 +149,96 @@ describe('focusLaneView', () => {
   })
   test('respects the locked-map zoom cap (cannot open the fan)', () => {
     assert.equal(focusLaneView({ ...inp, maxK: 3 }).view.k, 3)
+  })
+})
+
+describe('subCount as a record (UI-thread form)', () => {
+  test('zoomAtFocal gives the same result for a function or a record', () => {
+    const rec = { solar: 9, zodiac: 40 }
+    const a = zoomAtFocal({ ...base, view: { k: 2.9, tx: -100, ty: 0 }, factor: 2, focalY: 230 })
+    const b = zoomAtFocal({ ...base, view: { k: 2.9, tx: -100, ty: 0 }, factor: 2, focalY: 230, subCount: rec })
+    assert.deepEqual(a, b)
+  })
+  test('missing lanes count as one sub-lane', () => {
+    assert.equal(subCountOf({}, 'x'), 1)
+    assert.equal(subCountOf((id) => (id === 'x' ? 5 : 1), 'x'), 5)
+  })
+})
+
+describe('panView / jumpTx', () => {
+  test('pan stays inside the data edges and the vertical range', () => {
+    assert.deepEqual(panView({ k: 2, tx: -10, ty: 0 }, 50, 0, 400, -200), { k: 2, tx: 0, ty: 0 })
+    assert.deepEqual(panView({ k: 2, tx: -390, ty: -10 }, -50, -500, 400, -200), { k: 2, tx: -400, ty: -200 })
+  })
+  test('scrubber jump centres the tapped point of the whole span', () => {
+    // k = 4, tapping the middle of the track centres the middle of the data
+    const tx = jumpTx({ k: 4, tx: 0, ty: 0 }, 200, 400)
+    assert.equal((400 / 2 - tx) / (400 * 4), 0.5)
+    assert.equal(jumpTx({ k: 4, tx: 0, ty: 0 }, 0, 400), 0) // clamped at the start
+  })
+})
+
+describe('liveTransform / toDrawn', () => {
+  const drawn = { k: 2, tx: -120, ty: -30 }
+  test('a pure pan is a pure translation', () => {
+    const t = liveTransform(drawn, { k: 2, tx: -170, ty: -10 })
+    assert.deepEqual(t, { sx: 1, dx: -50, dy: 20 })
+  })
+  test('a drawn point lands where the live view would draw it', () => {
+    const live = { k: 3, tx: -260, ty: -30 }
+    const u = 0.4 // an axis position, as a fraction of the span
+    const xDrawn = u * 400 * drawn.k + drawn.tx
+    const xLive = u * 400 * live.k + live.tx
+    const t = liveTransform(drawn, live)
+    assert.ok(Math.abs(t.sx * xDrawn + t.dx - xLive) < 1e-9)
+  })
+  test('toDrawn inverts it, so taps hit what is on screen', () => {
+    const live = { k: 2.5, tx: -200, ty: -60 }
+    const t = liveTransform(drawn, live)
+    const p = toDrawn(t.sx * 150 + t.dx, 90 + t.dy, drawn, live)
+    assert.ok(Math.abs(p.x - 150) < 1e-9 && Math.abs(p.y - 90) < 1e-9)
+  })
+})
+
+describe('needsCommit', () => {
+  const W = 400
+  const v = { k: 2, tx: -100, ty: 0 }
+  test('any zoom re-draws', () => {
+    assert.equal(needsCommit(v, { ...v, k: 2.01 }, W), true)
+  })
+  test('no movement never re-draws', () => {
+    assert.equal(needsCommit(v, v, W), false)
+  })
+  test('a pan re-draws only near the edge of what was drawn', () => {
+    assert.equal(needsCommit(v, { ...v, tx: -110 }, W), false)
+    assert.equal(needsCommit(v, { ...v, tx: -100 - W * DRIFT_X_FRAC - 1 }, W), true)
+  })
+  test('a vertical pan alone never re-draws (lanes are not culled vertically)', () => {
+    assert.equal(needsCommit(v, { ...v, ty: -500 }, W), false)
+  })
+})
+
+describe('interpView (spring glides)', () => {
+  const W = 400
+  const a = { k: 1, tx: 0, ty: 0 }
+  const b = { k: 100, tx: -100 * 400 * 0.7 + 200, ty: -40 }
+  test('starts at a and ends at b', () => {
+    const s = interpView(a, b, 0, W, 300)
+    const e = interpView(a, b, 1, W, 300)
+    assert.ok(Math.abs(s.k - 1) < 1e-9 && Math.abs(s.tx) < 1e-9)
+    assert.ok(Math.abs(e.k - 100) < 1e-9 && Math.abs(e.tx - b.tx) < 1e-6 && e.ty === -40)
+  })
+  test('zoom moves in log space: half way through 1x to 100x is 10x', () => {
+    assert.ok(Math.abs(interpView(a, b, 0.5, W, 300).k - 10) < 1e-9)
+  })
+  test('the axis value at the screen centre moves linearly', () => {
+    const m = interpView(a, b, 0.5, W, 300)
+    const u = (W / 2 - m.tx) / (W * m.k)
+    assert.ok(Math.abs(u - (0.5 + 0.7) / 2) < 1e-9)
+  })
+  test('overshoot stays inside zoom limits and data edges', () => {
+    const o = interpView(a, { k: 300, tx: -400 * 299, ty: 0 }, 1.08, W, 300)
+    assert.ok(o.k <= 300 && o.tx >= W - W * o.k && o.tx <= 0)
+    assert.ok(interpView({ k: 1, tx: 0, ty: -10 }, a, 1.1, W, 300).ty <= 0)
   })
 })
