@@ -1,3 +1,4 @@
+import UiIcon from './UiIcon'
 import { useContext } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text as RNText, View } from 'react-native'
 import { COMPLETE, SHOW_PRICES, fallbackPrice, resolveCatalog, type CatalogEntry, type Lens } from './catalogue'
@@ -48,7 +49,7 @@ function MapCard({ entry, store, onOpen }: { entry: CatalogEntry; store: StoreSt
         <RNText style={{ color: FAINT, fontSize: 12.5, marginTop: 8, lineHeight: 18 }}>{entry.blurb}</RNText>
         {openable && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 10 }}>
-            <RNText style={{ color: entry.color, fontSize: 13, fontWeight: '600' }}>{entry.status === 'locked' ? 'Browse ›' : 'Open ›'}</RNText>
+            <RNText style={{ color: entry.color, fontSize: 13, fontWeight: '600' }}>{entry.status === 'locked' ? 'Browse' : 'Open'}{' '}<UiIcon name="chevron-right" size={13} /></RNText>
             {buyable && (
               <Pressable onPress={() => store.purchase(entry.id)} hitSlop={8}>
                 <RNText style={{ color: ACCENT, fontSize: 13, fontWeight: '600' }}>Unlock {price}</RNText>
@@ -79,8 +80,8 @@ export default function Atlas({ onOpen, onClose }: { onOpen: (l: Lens) => void; 
     <View style={{ position: 'absolute', inset: 0, backgroundColor: BG, zIndex: 50 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingHorizontal: 18, paddingBottom: 8 }}>
         <RNText style={{ color: TEXT, fontSize: 24, fontWeight: '600' }}>Maps</RNText>
-        <Pressable onPress={onClose} hitSlop={12}>
-          <RNText style={{ color: MUTED, fontSize: 22 }}>✕</RNText>
+        <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel="Close maps">
+          <RNText style={{ color: MUTED, fontSize: 22 }}><UiIcon name="close" size={22} /></RNText>
         </Pressable>
       </View>
       <RNText style={{ color: FAINT, fontSize: 13, paddingHorizontal: 18, marginBottom: 8, lineHeight: 19 }}>
@@ -109,7 +110,7 @@ export default function Atlas({ onOpen, onClose }: { onOpen: (l: Lens) => void; 
               {store.busy ? <ActivityIndicator color={ACCENT} /> : <RNText style={{ color: ACCENT, fontSize: SHOW_PRICES ? 17 : 13, fontWeight: '700' }}>{SHOW_PRICES ? completePrice : 'In the app'}</RNText>}
             </View>
             <RNText style={{ color: MUTED, fontSize: 13, marginTop: 6, lineHeight: 19 }}>{COMPLETE.blurb}</RNText>
-            {store.canPurchase && <RNText style={{ color: ACCENT, fontSize: 13, fontWeight: '600', marginTop: 10 }}>Unlock everything ›</RNText>}
+            {store.canPurchase && <RNText style={{ color: ACCENT, fontSize: 13, fontWeight: '600', marginTop: 10 }}>Unlock everything <UiIcon name="chevron-right" size={13} /></RNText>}
           </Pressable>
         )}
 
